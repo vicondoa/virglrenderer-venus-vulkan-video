@@ -332,9 +332,18 @@ vkr_dispatch_vkCmdCopyBuffer2(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdCopyImage(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyImage(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkCmdCopyImage *args)
 {
+   if (vkr_video_value_VkImageLayout(args->srcImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+   if (vkr_video_value_VkImageLayout(args->dstImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyImage, args, args->srcImage, args->srcImageLayout, args->dstImage,
                 args->dstImageLayout, args->regionCount, args->pRegions);
 }
@@ -347,9 +356,18 @@ vkr_dispatch_vkCmdCopyImage2(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdBlitImage(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdBlitImage(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkCmdBlitImage *args)
 {
+   if (vkr_video_value_VkImageLayout(args->srcImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+   if (vkr_video_value_VkImageLayout(args->dstImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdBlitImage, args, args->srcImage, args->srcImageLayout, args->dstImage,
                 args->dstImageLayout, args->regionCount, args->pRegions, args->filter);
 }
@@ -362,9 +380,14 @@ vkr_dispatch_vkCmdBlitImage2(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdCopyBufferToImage(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyBufferToImage(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdCopyBufferToImage *args)
 {
+   if (vkr_video_value_VkImageLayout(args->dstImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyBufferToImage, args, args->srcBuffer, args->dstImage,
                 args->dstImageLayout, args->regionCount, args->pRegions);
 }
@@ -377,9 +400,14 @@ vkr_dispatch_vkCmdCopyBufferToImage2(UNUSED struct vn_dispatch_context *dispatch
 }
 
 static void
-vkr_dispatch_vkCmdCopyImageToBuffer(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyImageToBuffer(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdCopyImageToBuffer *args)
 {
+   if (vkr_video_value_VkImageLayout(args->srcImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyImageToBuffer, args, args->srcImage, args->srcImageLayout,
                 args->dstBuffer, args->regionCount, args->pRegions);
 }
@@ -408,18 +436,28 @@ vkr_dispatch_vkCmdFillBuffer(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdClearColorImage(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdClearColorImage(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkCmdClearColorImage *args)
 {
+   if (vkr_video_value_VkImageLayout(args->imageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdClearColorImage, args, args->image, args->imageLayout, args->pColor,
                 args->rangeCount, args->pRanges);
 }
 
 static void
 vkr_dispatch_vkCmdClearDepthStencilImage(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdClearDepthStencilImage *args)
 {
+   if (vkr_video_value_VkImageLayout(args->imageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdClearDepthStencilImage, args, args->image, args->imageLayout,
                 args->pDepthStencil, args->rangeCount, args->pRanges);
 }
@@ -433,9 +471,18 @@ vkr_dispatch_vkCmdClearAttachments(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdResolveImage(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdResolveImage(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCmdResolveImage *args)
 {
+   if (vkr_video_value_VkImageLayout(args->srcImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+   if (vkr_video_value_VkImageLayout(args->dstImageLayout)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdResolveImage, args, args->srcImage, args->srcImageLayout,
                 args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions);
 }
@@ -519,9 +566,14 @@ vkr_dispatch_vkCmdWriteTimestamp(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdCopyQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyQueryPoolResults(struct vn_dispatch_context *dispatch,
                                        struct vn_command_vkCmdCopyQueryPoolResults *args)
 {
+   if (vkr_video_value_VkQueryResultFlags(args->flags)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyQueryPoolResults, args, args->queryPool, args->firstQuery,
                 args->queryCount, args->dstBuffer, args->dstOffset, args->stride,
                 args->flags);
@@ -858,9 +910,14 @@ vkr_dispatch_vkCmdPipelineBarrier2(struct vn_dispatch_context *ctx,
 }
 
 static void
-vkr_dispatch_vkCmdResetEvent2(UNUSED struct vn_dispatch_context *ctx,
+vkr_dispatch_vkCmdResetEvent2(struct vn_dispatch_context *ctx,
                               struct vn_command_vkCmdResetEvent2 *args)
 {
+   if (vkr_video_value_VkPipelineStageFlags2(args->stageMask)) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdResetEvent2, args, args->event, args->stageMask);
 }
 
@@ -880,9 +937,14 @@ vkr_dispatch_vkCmdWaitEvents2(UNUSED struct vn_dispatch_context *ctx,
 }
 
 static void
-vkr_dispatch_vkCmdWriteTimestamp2(UNUSED struct vn_dispatch_context *ctx,
+vkr_dispatch_vkCmdWriteTimestamp2(struct vn_dispatch_context *ctx,
                                   struct vn_command_vkCmdWriteTimestamp2 *args)
 {
+   if (vkr_video_value_VkPipelineStageFlags2(args->stage)) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdWriteTimestamp2, args, args->stage, args->queryPool, args->query);
 }
 
@@ -1197,9 +1259,14 @@ vkr_dispatch_vkCmdCopyMemoryToAccelerationStructureKHR(
 
 static void
 vkr_dispatch_vkCmdWriteAccelerationStructuresPropertiesKHR(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdWriteAccelerationStructuresPropertiesKHR *args)
 {
+   if (vkr_video_value_VkQueryType(args->queryType)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdWriteAccelerationStructuresPropertiesKHR, args,
                 args->accelerationStructureCount, args->pAccelerationStructures,
                 args->queryType, args->queryPool, args->firstQuery);

@@ -6,6 +6,7 @@
 #include "vkr_physical_device.h"
 
 #include "vkr_video_scrub.h"
+#include "vkr_video_reject.h"
 
 #include "venus-protocol/vn_protocol_renderer_device.h"
 
@@ -652,6 +653,11 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceImageFormatProperties *args)
 {
+   if (vkr_video_value_VkImageUsageFlags(args->usage)) {
+      args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
+      return;
+   }
+
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
    struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;
@@ -664,9 +670,14 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties(
 
 static void
 vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties *args)
 {
+   if (vkr_video_value_VkImageUsageFlags(args->usage)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
    struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;

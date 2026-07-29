@@ -31,6 +31,11 @@ static void
 vkr_dispatch_vkGetQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch,
                                    struct vn_command_vkGetQueryPoolResults *args)
 {
+   if (vkr_video_value_VkQueryResultFlags(args->flags)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
