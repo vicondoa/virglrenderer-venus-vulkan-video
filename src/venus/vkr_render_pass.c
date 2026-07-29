@@ -47,6 +47,8 @@ vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCreateRenderPass *args)
 {
    if (vkr_render_pass_has_video_layout(args->pCreateInfo)) {
+      if (args->pRenderPass)
+         *args->pRenderPass = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }
@@ -107,6 +109,8 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCreateRenderPass2 *args)
 {
    if (vkr_render_pass2_has_video_layout(args->pCreateInfo)) {
+      if (args->pRenderPass)
+         *args->pRenderPass = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }
