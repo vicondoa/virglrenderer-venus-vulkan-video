@@ -215,7 +215,11 @@ VN_H264_DEFINE_FLAG_HELPERS(StdVideoH264PpsFlags,    VN_H264_PPS_FLAG, VN_H264_P
    static inline void                                                         \
    vn_decode_##Type(struct vn_cs_decoder *dec, Type *val)                     \
    {                                                                          \
-      uint32_t tmp;                                                           \
+      /* Initialized: on a short read the decode primitive is expected to  \
+       * zero it, but relying on that would make the unpack below read an \
+       * indeterminate value if a future primitive stops doing so.        \
+       */                                                                 \
+      uint32_t tmp = 0;                                                    \
       vn_decode_uint32_t(dec, &tmp);                                          \
       if (!vn_unpack_##Type(tmp, val))                                        \
          vn_cs_decoder_set_fatal(dec);                                        \

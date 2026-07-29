@@ -237,7 +237,7 @@ vn_decode_StdVideoH264SequenceParameterSet_temp(struct vn_cs_decoder *dec, StdVi
         if (!val->pOffsetForRefFrame) return;
         vn_decode_int32_t_array(dec, (int32_t *)val->pOffsetForRefFrame, array_size);
     } else {
-        vn_decode_array_size_unchecked(dec);
+        vn_decode_array_size(dec, val->num_ref_frames_in_pic_order_cnt_cycle);
         val->pOffsetForRefFrame = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
