@@ -128,6 +128,27 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
          return;
    }
 
+   /* Reject device extensions the renderer does not advertise.
+    *
+    * Enumeration filtering alone does not prevent enablement. The guest's
+    * ppEnabledExtensionNames is forwarded verbatim to the host below, and
+    * vkr_device_init_proc_table() builds the device proc table from that same
+    * list, so a guest that simply names an extension the renderer never
+    * enumerated gets it enabled on any host that supports it. Nothing before
+    * this point compared the requested names against what was advertised.
+    *
+    * That matters most for extensions the renderer has partial or no support
+    * for: enabling them host-side changes driver behaviour and can light up
+    * entry points the renderer is not prepared to mediate.
+    */
+   for (uint32_t i = 0; i < args->pCreateInfo->enabledExtensionCount; i++) {
+      const char *name = args->pCreateInfo->ppEnabledExtensionNames[i];
+      if (!name || !vkr_extension_get_spec_version(name)) {
+         args->ret = VK_ERROR_EXTENSION_NOT_PRESENT;
+         return;
+      }
+   }
+
    /* append extensions for our own use */
    const char **exts = NULL;
    uint32_t ext_count = args->pCreateInfo->enabledExtensionCount;
