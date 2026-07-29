@@ -109,6 +109,24 @@ vkr_video_scrub_queue_family_properties2_array(VkQueueFamilyProperties2 *props,
    }
 }
 
+/* Named element helpers so the scrubbed struct type appears in the source.
+ * The list walk only ever named the LIST type, which left no record that the
+ * element type is the thing being scrubbed.
+ */
+static inline void
+vkr_video_scrub_VkDrmFormatModifierPropertiesEXT(VkDrmFormatModifierPropertiesEXT *props)
+{
+   props->drmFormatModifierTilingFeatures &=
+      ~(VkFormatFeatureFlags)VKR_VIDEO_FORMAT_FEATURE_BITS;
+}
+
+static inline void
+vkr_video_scrub_VkDrmFormatModifierProperties2EXT(VkDrmFormatModifierProperties2EXT *props)
+{
+   props->drmFormatModifierTilingFeatures &=
+      ~(VkFormatFeatureFlags2)VKR_VIDEO_FORMAT_FEATURE_BITS2;
+}
+
 static inline void
 vkr_video_scrub_format_properties(VkFormatProperties *props)
 {
@@ -142,8 +160,8 @@ vkr_video_scrub_format_properties2(VkFormatProperties2 *props)
             (VkDrmFormatModifierPropertiesListEXT *)pnext;
          if (list->pDrmFormatModifierProperties) {
             for (uint32_t i = 0; i < list->drmFormatModifierCount; i++) {
-               list->pDrmFormatModifierProperties[i].drmFormatModifierTilingFeatures &=
-                  ~(VkFormatFeatureFlags)VKR_VIDEO_FORMAT_FEATURE_BITS;
+               vkr_video_scrub_VkDrmFormatModifierPropertiesEXT(
+                  &list->pDrmFormatModifierProperties[i]);
             }
          }
          break;
@@ -153,8 +171,8 @@ vkr_video_scrub_format_properties2(VkFormatProperties2 *props)
             (VkDrmFormatModifierPropertiesList2EXT *)pnext;
          if (list->pDrmFormatModifierProperties) {
             for (uint32_t i = 0; i < list->drmFormatModifierCount; i++) {
-               list->pDrmFormatModifierProperties[i].drmFormatModifierTilingFeatures &=
-                  ~(VkFormatFeatureFlags2)VKR_VIDEO_FORMAT_FEATURE_BITS2;
+               vkr_video_scrub_VkDrmFormatModifierProperties2EXT(
+                  &list->pDrmFormatModifierProperties[i]);
             }
          }
          break;
