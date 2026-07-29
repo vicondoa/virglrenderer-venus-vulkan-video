@@ -169,7 +169,7 @@ vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCreateFramebuffer *args)
 {
    if (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext)) {
-if (args->pFramebuffer)
+      if (args->pFramebuffer)
          *args->pFramebuffer = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;

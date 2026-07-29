@@ -34,7 +34,7 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
 
    if (vkr_video_reject_VkImageCreateInfo(args->pCreateInfo) ||
        (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
-if (args->pImage)
+      if (args->pImage)
          *args->pImage = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
@@ -188,7 +188,7 @@ vkr_dispatch_vkCreateImageView(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCreateImageView *args)
 {
    if (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext)) {
-if (args->pView)
+      if (args->pView)
          *args->pView = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
