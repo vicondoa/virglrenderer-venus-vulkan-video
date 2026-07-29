@@ -675,4 +675,34 @@ vkr_video_descriptor_carries_image(VkDescriptorType type)
    }
 }
 
+/* Zero output pNext payloads on a reject path, preserving the
+ * sType/pNext header the encoder asserts on. The set is the one
+ * the reply encoder itself enumerates. */
+static inline void
+vkr_video_zero_image_format_pnext(void *pnext)
+{
+   for (VkBaseOutStructure *s = pnext; s; s = s->pNext) {
+      const VkStructureType st = s->sType;
+      VkBaseOutStructure *next = s->pNext;
+      switch (st) {
+      case VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES:
+         memset(s, 0, sizeof(VkExternalImageFormatProperties));
+         break;
+      case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES:
+         memset(s, 0, sizeof(VkSamplerYcbcrConversionImageFormatProperties));
+         break;
+      case VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT:
+         memset(s, 0, sizeof(VkFilterCubicImageViewImageFormatPropertiesEXT));
+         break;
+      case VK_STRUCTURE_TYPE_HOST_IMAGE_COPY_DEVICE_PERFORMANCE_QUERY:
+         memset(s, 0, sizeof(VkHostImageCopyDevicePerformanceQuery));
+         break;
+      default:
+         break;
+      }
+      s->sType = st;
+      s->pNext = next;
+   }
+}
+
 #endif /* VKR_VIDEO_REJECT_H */

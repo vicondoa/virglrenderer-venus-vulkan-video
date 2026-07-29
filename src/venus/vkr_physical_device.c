@@ -860,9 +860,11 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
        (args->pImageFormatInfo &&
         vkr_video_reject_pnext(args->pImageFormatInfo->pNext))) {
       /* sType and pNext survive: the reply encoder asserts on them. */
-      if (args->pImageFormatProperties)
+      if (args->pImageFormatProperties) {
          memset(&args->pImageFormatProperties->imageFormatProperties, 0,
                 sizeof(args->pImageFormatProperties->imageFormatProperties));
+         vkr_video_zero_image_format_pnext(args->pImageFormatProperties->pNext);
+      }
       args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
       return;
    }
