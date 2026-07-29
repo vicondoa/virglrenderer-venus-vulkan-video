@@ -374,18 +374,6 @@ vkr_video_reject_VkPhysicalDeviceExternalBufferInfo(const VkPhysicalDeviceExtern
 }
 
 static inline bool
-vkr_video_reject_VkPhysicalDeviceHostImageCopyProperties(const VkPhysicalDeviceHostImageCopyProperties *s)
-{
-   if (!s)
-      return false;
-   if (vkr_video_value_VkImageLayout(s->pCopyDstLayouts))
-      return true;
-   if (vkr_video_value_VkImageLayout(s->pCopySrcLayouts))
-      return true;
-   return false;
-}
-
-static inline bool
 vkr_video_reject_VkPhysicalDeviceImageFormatInfo2(const VkPhysicalDeviceImageFormatInfo2 *s)
 {
    if (!s)
