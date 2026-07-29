@@ -128,6 +128,11 @@ static void
 vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCreateBufferView *args)
 {
+   if (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    vkr_buffer_view_create_and_add(dispatch->data, args);
 }
 

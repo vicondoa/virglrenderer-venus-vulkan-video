@@ -534,9 +534,16 @@ vkr_dispatch_vkCmdResetEvent(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdWaitEvents(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdWaitEvents(struct vn_dispatch_context *dispatch,
                              struct vn_command_vkCmdWaitEvents *args)
 {
+   for (uint32_t i = 0; i < args->imageMemoryBarrierCount; i++) {
+      if (vkr_video_reject_VkImageMemoryBarrier(&args->pImageMemoryBarriers[i])) {
+         vkr_context_set_fatal(dispatch->data);
+         return;
+      }
+   }
+
    VKR_CMD_CALL(CmdWaitEvents, args, args->eventCount, args->pEvents, args->srcStageMask,
                 args->dstStageMask, args->memoryBarrierCount, args->pMemoryBarriers,
                 args->bufferMemoryBarrierCount, args->pBufferMemoryBarriers,
@@ -930,7 +937,9 @@ static void
 vkr_dispatch_vkCmdBeginRendering(struct vn_dispatch_context *ctx,
                                  struct vn_command_vkCmdBeginRendering *args)
 {
-   if (vkr_video_reject_rendering_info(args->pRenderingInfo)) {
+   if (vkr_video_reject_rendering_info(args->pRenderingInfo) ||
+       (args->pRenderingInfo &&
+        vkr_video_reject_pnext(args->pRenderingInfo->pNext))) {
       vkr_context_set_fatal(ctx->data);
       return;
    }
@@ -1026,9 +1035,21 @@ vkr_dispatch_vkCmdDrawMultiIndexedEXT(UNUSED struct vn_dispatch_context *dispatc
 }
 
 static void
-vkr_dispatch_vkCmdPushDescriptorSet(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdPushDescriptorSet(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdPushDescriptorSet *args)
 {
+   for (uint32_t i = 0; i < args->descriptorWriteCount; i++) {
+      const VkWriteDescriptorSet *wr = &args->pDescriptorWrites[i];
+      if (!wr->pImageInfo)
+         continue;
+      for (uint32_t j = 0; j < wr->descriptorCount; j++) {
+         if (vkr_video_reject_VkDescriptorImageInfo(&wr->pImageInfo[j])) {
+            vkr_context_set_fatal(dispatch->data);
+            return;
+         }
+      }
+   }
+
    VKR_CMD_CALL(CmdPushDescriptorSet, args, args->pipelineBindPoint, args->layout,
                 args->set, args->descriptorWriteCount, args->pDescriptorWrites);
 }
@@ -1268,9 +1289,24 @@ vkr_dispatch_vkCmdPushConstants2(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdPushDescriptorSet2(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdPushDescriptorSet2(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkCmdPushDescriptorSet2 *args)
 {
+   if (args->pPushDescriptorSetInfo) {
+      const VkPushDescriptorSetInfo *pi = args->pPushDescriptorSetInfo;
+      for (uint32_t i = 0; i < pi->descriptorWriteCount; i++) {
+         const VkWriteDescriptorSet *wr = &pi->pDescriptorWrites[i];
+         if (!wr->pImageInfo)
+            continue;
+         for (uint32_t j = 0; j < wr->descriptorCount; j++) {
+            if (vkr_video_reject_VkDescriptorImageInfo(&wr->pImageInfo[j])) {
+               vkr_context_set_fatal(dispatch->data);
+               return;
+            }
+         }
+      }
+   }
+
    VKR_CMD_CALL(CmdPushDescriptorSet2, args, args->pPushDescriptorSetInfo);
 }
 

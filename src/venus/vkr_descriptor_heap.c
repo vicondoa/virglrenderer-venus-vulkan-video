@@ -50,8 +50,12 @@ vkr_dispatch_vkWriteResourceDescriptorMESA(
          break;
       }
 
-      if (is_image && args->pResource->data.pImage &&
-          vkr_video_reject_VkImageDescriptorInfoEXT(args->pResource->data.pImage)) {
+      const VkImageDescriptorInfoEXT *img =
+         is_image ? args->pResource->data.pImage : NULL;
+
+      if (img &&
+          (vkr_video_reject_VkImageDescriptorInfoEXT(img) ||
+           (img->pView && vkr_video_reject_pnext(img->pView->pNext)))) {
          args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
          return;
       }

@@ -799,7 +799,8 @@ vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(
    struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 *args)
 {
    if (vkr_video_reject_VkPhysicalDeviceSparseImageFormatInfo2(args->pFormatInfo)) {
-      args->pPropertyCount = 0;
+      if (args->pPropertyCount)
+         *args->pPropertyCount = 0;
       return;
    }
 
