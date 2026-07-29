@@ -24,6 +24,14 @@ vkr_video_value_VkAccessFlags2(VkAccessFlags2 value)
 }
 
 static inline bool
+vkr_video_value_VkBufferCreateFlags(VkBufferCreateFlags value)
+{
+   const VkBufferCreateFlags video =
+      (VkBufferCreateFlags)VK_BUFFER_CREATE_VIDEO_PROFILE_INDEPENDENT_BIT_KHR;
+   return (value & video) != 0;
+}
+
+static inline bool
 vkr_video_value_VkBufferUsageFlags(VkBufferUsageFlags value)
 {
    const VkBufferUsageFlags video =
@@ -42,6 +50,14 @@ vkr_video_value_VkBufferUsageFlags2(VkBufferUsageFlags2 value)
       (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_DECODE_SRC_BIT_KHR |
       (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_ENCODE_DST_BIT_KHR |
       (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_ENCODE_SRC_BIT_KHR;
+   return (value & video) != 0;
+}
+
+static inline bool
+vkr_video_value_VkImageCreateFlags(VkImageCreateFlags value)
+{
+   const VkImageCreateFlags video =
+      (VkImageCreateFlags)VK_IMAGE_CREATE_VIDEO_PROFILE_INDEPENDENT_BIT_KHR;
    return (value & video) != 0;
 }
 
