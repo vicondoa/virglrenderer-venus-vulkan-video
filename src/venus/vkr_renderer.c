@@ -40,6 +40,32 @@ vkr_get_capset(void *capset, uint32_t flags)
       uint32_t ext_mask[VN_INFO_EXTENSION_MAX_NUMBER / 32 + 1] = { 0 };
       vn_info_extension_mask_init(ext_mask);
 
+      /* Clear the video extension bits.
+       *
+       * vn_info_extension_mask_init() sets a bit for every entry in
+       * _vn_info_extensions with no filter for whether this renderer actually
+       * supports the extension. The video extensions are in that table because
+       * the protocol can serialize them, but nothing here can execute them:
+       * their dispatch entries are NULL and vkr_extension_table does not
+       * enable them.
+       *
+       * The capset is a separate advertisement channel from
+       * vkGetPhysicalDeviceExtensionProperties, and the guest reads it before
+       * issuing any command, so leaving these set tells the guest Venus speaks
+       * video while every other surface says it does not.
+       *
+       * Remove this when video is genuinely supported end to end.
+       */
+      static const uint32_t vkr_unsupported_ext_numbers[] = {
+         24, /* VK_KHR_video_queue */
+         25, /* VK_KHR_video_decode_queue */
+         41, /* VK_KHR_video_decode_h264 */
+      };
+      for (uint32_t i = 0; i < ARRAY_SIZE(vkr_unsupported_ext_numbers); i++) {
+         const uint32_t n = vkr_unsupported_ext_numbers[i];
+         ext_mask[n / 32] &= ~(1u << (n % 32));
+      }
+
       static_assert(sizeof(ext_mask) <= sizeof(c->vk_extension_mask1),
                     "Time to extend venus capset with vk_extension_mask2");
       memcpy(c->vk_extension_mask1, ext_mask, sizeof(ext_mask));
