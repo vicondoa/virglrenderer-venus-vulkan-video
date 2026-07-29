@@ -35,17 +35,25 @@
  */
 
 /* VkQueueFlagBits */
-#define VKR_VIDEO_QUEUE_BITS (VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+/* Encode as well as decode: the boundary is that video is absent, not that
+ * decode is absent. A host queue advertising encode would otherwise reach
+ * the guest through the base queueFlags untouched. */
+#define VKR_VIDEO_QUEUE_BITS                                                             \
+   (VK_QUEUE_VIDEO_DECODE_BIT_KHR | VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 
 /* VkFormatFeatureFlagBits */
 #define VKR_VIDEO_FORMAT_FEATURE_BITS                                                    \
    (VK_FORMAT_FEATURE_VIDEO_DECODE_OUTPUT_BIT_KHR |                                      \
-    VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR)
+    VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR |                                         \
+    VK_FORMAT_FEATURE_VIDEO_ENCODE_INPUT_BIT_KHR |                                       \
+    VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR)
 
 /* VkFormatFeatureFlagBits2 */
 #define VKR_VIDEO_FORMAT_FEATURE_BITS2                                                   \
    (VK_FORMAT_FEATURE_2_VIDEO_DECODE_OUTPUT_BIT_KHR |                                    \
-    VK_FORMAT_FEATURE_2_VIDEO_DECODE_DPB_BIT_KHR)
+    VK_FORMAT_FEATURE_2_VIDEO_DECODE_DPB_BIT_KHR |                                       \
+    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_INPUT_BIT_KHR |                                     \
+    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_DPB_BIT_KHR)
 
 static inline bool
 vkr_video_is_video_image_layout(VkImageLayout layout)
@@ -54,6 +62,9 @@ vkr_video_is_video_image_layout(VkImageLayout layout)
    case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_SRC_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR:
       return true;
    default:
       return false;

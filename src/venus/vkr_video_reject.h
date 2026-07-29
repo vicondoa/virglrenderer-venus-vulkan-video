@@ -17,7 +17,9 @@ vkr_video_value_VkAccessFlags2(VkAccessFlags2 value)
 {
    const VkAccessFlags2 video =
       (VkAccessFlags2)VK_ACCESS_2_VIDEO_DECODE_READ_BIT_KHR |
-      (VkAccessFlags2)VK_ACCESS_2_VIDEO_DECODE_WRITE_BIT_KHR;
+      (VkAccessFlags2)VK_ACCESS_2_VIDEO_DECODE_WRITE_BIT_KHR |
+      (VkAccessFlags2)VK_ACCESS_2_VIDEO_ENCODE_READ_BIT_KHR |
+      (VkAccessFlags2)VK_ACCESS_2_VIDEO_ENCODE_WRITE_BIT_KHR;
    return (value & video) != 0;
 }
 
@@ -26,7 +28,9 @@ vkr_video_value_VkBufferUsageFlags(VkBufferUsageFlags value)
 {
    const VkBufferUsageFlags video =
       (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_DECODE_DST_BIT_KHR |
-      (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_DECODE_SRC_BIT_KHR;
+      (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_DECODE_SRC_BIT_KHR |
+      (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_ENCODE_DST_BIT_KHR |
+      (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_ENCODE_SRC_BIT_KHR;
    return (value & video) != 0;
 }
 
@@ -48,6 +52,10 @@ vkr_video_value_VkImageLayout(VkImageLayout value)
    case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_QUANTIZATION_MAP_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_SRC_KHR:
       return true;
    default:
       return false;
@@ -60,7 +68,12 @@ vkr_video_value_VkImageUsageFlags(VkImageUsageFlags value)
    const VkImageUsageFlags video =
       (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR |
       (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR |
-      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR;
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_DPB_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_DST_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_EMPHASIS_MAP_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_QUANTIZATION_DELTA_MAP_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR;
    return (value & video) != 0;
 }
 
@@ -80,7 +93,8 @@ static inline bool
 vkr_video_value_VkPipelineStageFlags2(VkPipelineStageFlags2 value)
 {
    const VkPipelineStageFlags2 video =
-      (VkPipelineStageFlags2)VK_PIPELINE_STAGE_2_VIDEO_DECODE_BIT_KHR;
+      (VkPipelineStageFlags2)VK_PIPELINE_STAGE_2_VIDEO_DECODE_BIT_KHR |
+      (VkPipelineStageFlags2)VK_PIPELINE_STAGE_2_VIDEO_ENCODE_BIT_KHR;
    return (value & video) != 0;
 }
 
@@ -97,6 +111,7 @@ vkr_video_value_VkQueryType(VkQueryType value)
 {
    switch (value) {
    case VK_QUERY_TYPE_RESULT_STATUS_ONLY_KHR:
+   case VK_QUERY_TYPE_VIDEO_ENCODE_FEEDBACK_KHR:
       return true;
    default:
       return false;
