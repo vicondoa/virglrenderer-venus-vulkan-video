@@ -7,6 +7,7 @@
 
 #include "vkr_image_gen.h"
 #include "vkr_physical_device.h"
+#include "vkr_video_reject.h"
 
 static void
 vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
@@ -30,6 +31,11 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
     * lack of a well-defined image layout.  But we never end up in that
     * situation because the app does not consider the memory external.
     */
+
+   if (vkr_video_reject_VkImageCreateInfo(args->pCreateInfo)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
 
    vkr_image_create_and_add(dispatch->data, args);
 }

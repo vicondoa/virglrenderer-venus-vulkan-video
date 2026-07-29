@@ -6,11 +6,17 @@
 #include "vkr_query_pool.h"
 
 #include "vkr_query_pool_gen.h"
+#include "vkr_video_reject.h"
 
 static void
 vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCreateQueryPool *args)
 {
+   if (vkr_video_reject_VkQueryPoolCreateInfo(args->pCreateInfo)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    vkr_query_pool_create_and_add(dispatch->data, args);
 }
 

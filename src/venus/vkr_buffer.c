@@ -7,6 +7,7 @@
 
 #include "vkr_buffer_gen.h"
 #include "vkr_physical_device.h"
+#include "vkr_video_reject.h"
 
 static void
 vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
@@ -36,6 +37,11 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
     * to determine the exportability.  See
     * vkr_physical_device_init_memory_properties as well.
     */
+
+   if (vkr_video_reject_VkBufferCreateInfo(args->pCreateInfo)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
 
    vkr_buffer_create_and_add(dispatch->data, args);
 }
