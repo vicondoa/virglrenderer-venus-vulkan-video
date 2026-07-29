@@ -233,6 +233,14 @@ vn_decode_VkBufferCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkBufferDeviceAddressCreateInfoEXT_self_temp(dec, (VkBufferDeviceAddressCreateInfoEXT *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoProfileListInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoProfileListInfoKHR *)pnext)->pNext = vn_decode_VkBufferCreateInfo_pnext_temp(dec);
+            vn_decode_VkVideoProfileListInfoKHR_self_temp(dec, (VkVideoProfileListInfoKHR *)pnext);
+        }
+        break;
     default:
         /* unexpected struct */
         pnext = NULL;
@@ -310,6 +318,9 @@ vn_replace_VkBufferCreateInfo_handle(VkBufferCreateInfo *val)
             break;
         case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT:
             vn_replace_VkBufferDeviceAddressCreateInfoEXT_handle_self((VkBufferDeviceAddressCreateInfoEXT *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+            vn_replace_VkVideoProfileListInfoKHR_handle_self((VkVideoProfileListInfoKHR *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */

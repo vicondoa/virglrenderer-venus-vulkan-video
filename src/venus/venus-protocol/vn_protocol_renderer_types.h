@@ -10,6 +10,11 @@
 
 #include "vn_protocol_renderer_defines.h"
 
+/* Explicit bit packing for the StdVideo H.264 bitfield flag structs. The
+ * generated serializers below expand VN_H264_DEFINE_FLAG_SERIALIZERS, which is
+ * defined here along with the shift constants that form the wire contract. */
+#include "vn_protocol_video_h264_flags.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -339,6 +344,27 @@ vn_decode_float_array(struct vn_cs_decoder *dec, float *val, uint32_t count)
     const size_t size = sizeof(*val) * count;
     assert(size >= count);
     vn_decode(dec, size, val, size);
+}
+
+/* int8_t */
+
+static inline size_t
+vn_sizeof_int8_t(const int8_t *val)
+{
+    assert(sizeof(*val) == 1);
+    return 4;
+}
+
+static inline void
+vn_encode_int8_t(struct vn_cs_encoder *enc, const int8_t *val)
+{
+    vn_encode(enc, 4, val, sizeof(*val));
+}
+
+static inline void
+vn_decode_int8_t(struct vn_cs_decoder *dec, int8_t *val)
+{
+    vn_decode(dec, 4, val, sizeof(*val));
 }
 
 /* uint8_t */
@@ -2262,6 +2288,216 @@ vn_decode_VkGraphicsPipelineLibraryFlagBitsEXT(struct vn_cs_decoder *dec, VkGrap
     vn_decode_int32_t(dec, (int32_t *)val);
 }
 
+/* enum VkVideoCodecOperationFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoCodecOperationFlagBitsKHR(const VkVideoCodecOperationFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoCodecOperationFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoCodecOperationFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoCodecOperationFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoCodecOperationFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoCapabilityFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoCapabilityFlagBitsKHR(const VkVideoCapabilityFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoCapabilityFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoCapabilityFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoCapabilityFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoCapabilityFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoSessionCreateFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoSessionCreateFlagBitsKHR(const VkVideoSessionCreateFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoSessionCreateFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoSessionCreateFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoSessionCreateFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoSessionCreateFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoSessionParametersCreateFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoSessionParametersCreateFlagBitsKHR(const VkVideoSessionParametersCreateFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoSessionParametersCreateFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoSessionParametersCreateFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoSessionParametersCreateFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoSessionParametersCreateFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoCodingControlFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoCodingControlFlagBitsKHR(const VkVideoCodingControlFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoCodingControlFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoCodingControlFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoCodingControlFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoCodingControlFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoDecodeUsageFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoDecodeUsageFlagBitsKHR(const VkVideoDecodeUsageFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoDecodeUsageFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoDecodeUsageFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoDecodeUsageFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoDecodeUsageFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoDecodeCapabilityFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoDecodeCapabilityFlagBitsKHR(const VkVideoDecodeCapabilityFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoDecodeCapabilityFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoDecodeCapabilityFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoDecodeCapabilityFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoDecodeCapabilityFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoDecodeH264PictureLayoutFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoDecodeH264PictureLayoutFlagBitsKHR(const VkVideoDecodeH264PictureLayoutFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoDecodeH264PictureLayoutFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoDecodeH264PictureLayoutFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoDecodeH264PictureLayoutFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoDecodeH264PictureLayoutFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoChromaSubsamplingFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoChromaSubsamplingFlagBitsKHR(const VkVideoChromaSubsamplingFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoChromaSubsamplingFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoChromaSubsamplingFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoChromaSubsamplingFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoChromaSubsamplingFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkVideoComponentBitDepthFlagBitsKHR */
+
+static inline size_t
+vn_sizeof_VkVideoComponentBitDepthFlagBitsKHR(const VkVideoComponentBitDepthFlagBitsKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkVideoComponentBitDepthFlagBitsKHR(struct vn_cs_encoder *enc, const VkVideoComponentBitDepthFlagBitsKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkVideoComponentBitDepthFlagBitsKHR(struct vn_cs_decoder *dec, VkVideoComponentBitDepthFlagBitsKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
 /* enum VkAttachmentLoadOp */
 
 static inline size_t
@@ -3822,6 +4058,27 @@ vn_decode_VkDriverId(struct vn_cs_decoder *dec, VkDriverId *val)
     vn_decode_int32_t(dec, (int32_t *)val);
 }
 
+/* enum VkQueryResultStatusKHR */
+
+static inline size_t
+vn_sizeof_VkQueryResultStatusKHR(const VkQueryResultStatusKHR *val)
+{
+    assert(sizeof(*val) == sizeof(int32_t));
+    return vn_sizeof_int32_t((const int32_t *)val);
+}
+
+static inline void
+vn_encode_VkQueryResultStatusKHR(struct vn_cs_encoder *enc, const VkQueryResultStatusKHR *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkQueryResultStatusKHR(struct vn_cs_decoder *dec, VkQueryResultStatusKHR *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
 /* enum VkCommandFlagBitsEXT */
 
 static inline size_t
@@ -3884,6 +4141,38 @@ vn_decode_VkRingStatusFlagBitsMESA(struct vn_cs_decoder *dec, VkRingStatusFlagBi
 {
     vn_decode_int32_t(dec, (int32_t *)val);
 }
+
+
+/* StdVideo H.264 bitfield flags */
+
+/*
+ * These StdVideo types are C bitfields, so they cannot be described as ordinary
+ * XML members: the generated scalar helpers take pointers, and taking the
+ * address of a bitfield is illegal C. Serializing the struct as one opaque
+ * uint32_t would compile, but C leaves bitfield allocation order and padding
+ * implementation-defined, so guest and host are not guaranteed to agree -- and
+ * a disagreement corrupts decode parameters silently rather than failing.
+ *
+ * Each struct therefore crosses the wire as a single uint32_t packed by
+ * explicit shifts over named fields. The shift constants live in
+ * vn_protocol_video_h264_flags.h and are append-only wire contract.
+ */
+
+VN_H264_DEFINE_FLAG_SERIALIZERS(StdVideoDecodeH264PictureInfoFlags)
+VN_H264_DEFINE_FLAG_SERIALIZERS(StdVideoDecodeH264ReferenceInfoFlags)
+VN_H264_DEFINE_FLAG_SERIALIZERS(StdVideoH264SpsFlags)
+VN_H264_DEFINE_FLAG_SERIALIZERS(StdVideoH264SpsVuiFlags)
+VN_H264_DEFINE_FLAG_SERIALIZERS(StdVideoH264PpsFlags)
+
+VN_H264_DEFINE_ENUM_SERIALIZERS(StdVideoH264ProfileIdc)
+VN_H264_DEFINE_ENUM_SERIALIZERS(StdVideoH264LevelIdc)
+VN_H264_DEFINE_ENUM_SERIALIZERS(StdVideoH264ChromaFormatIdc)
+VN_H264_DEFINE_ENUM_SERIALIZERS(StdVideoH264PocType)
+VN_H264_DEFINE_ENUM_SERIALIZERS(StdVideoH264AspectRatioIdc)
+VN_H264_DEFINE_ENUM_SERIALIZERS(StdVideoH264WeightedBipredIdc)
+
+VN_H264_DEFINE_SCALING_LISTS_SERIALIZERS()
+
 
 #pragma GCC diagnostic pop
 

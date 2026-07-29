@@ -2957,6 +2957,658 @@ vn_replace_VkDependencyInfo_handle(VkDependencyInfo *val)
     } while (pnext);
 }
 
+/* struct VkVideoPictureResourceInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoPictureResourceInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkVideoPictureResourceInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoPictureResourceInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkOffset2D_temp(dec, &val->codedOffset);
+    vn_decode_VkExtent2D_temp(dec, &val->codedExtent);
+    vn_decode_uint32_t(dec, &val->baseArrayLayer);
+    vn_decode_VkImageView_lookup(dec, &val->imageViewBinding);
+}
+
+static inline void
+vn_decode_VkVideoPictureResourceInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoPictureResourceInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_PICTURE_RESOURCE_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoPictureResourceInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoPictureResourceInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoPictureResourceInfoKHR_handle_self(VkVideoPictureResourceInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    vn_replace_VkOffset2D_handle(&val->codedOffset);
+    vn_replace_VkExtent2D_handle(&val->codedExtent);
+    /* skip val->baseArrayLayer */
+    vn_replace_VkImageView_handle(&val->imageViewBinding);
+}
+
+static inline void
+vn_replace_VkVideoPictureResourceInfoKHR_handle(VkVideoPictureResourceInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_PICTURE_RESOURCE_INFO_KHR:
+            vn_replace_VkVideoPictureResourceInfoKHR_handle_self((VkVideoPictureResourceInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct StdVideoDecodeH264ReferenceInfo */
+
+static inline void
+vn_decode_StdVideoDecodeH264ReferenceInfo_temp(struct vn_cs_decoder *dec, StdVideoDecodeH264ReferenceInfo *val)
+{
+    vn_decode_StdVideoDecodeH264ReferenceInfoFlags_temp(dec, &val->flags);
+    vn_decode_uint16_t(dec, &val->FrameNum);
+    vn_decode_uint16_t(dec, &val->reserved);
+    {
+        const size_t array_size = vn_decode_array_size(dec, 2);
+        vn_decode_int32_t_array(dec, val->PicOrderCnt, array_size);
+    }
+}
+
+static inline void
+vn_replace_StdVideoDecodeH264ReferenceInfo_handle(StdVideoDecodeH264ReferenceInfo *val)
+{
+    vn_replace_StdVideoDecodeH264ReferenceInfoFlags_handle(&val->flags);
+    /* skip val->FrameNum */
+    /* skip val->reserved */
+    /* skip val->PicOrderCnt */
+}
+
+/* struct VkVideoDecodeH264DpbSlotInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoDecodeH264DpbSlotInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkVideoDecodeH264DpbSlotInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoDecodeH264DpbSlotInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    if (vn_decode_simple_pointer(dec)) {
+        val->pStdReferenceInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pStdReferenceInfo));
+        if (!val->pStdReferenceInfo) return;
+        vn_decode_StdVideoDecodeH264ReferenceInfo_temp(dec, (StdVideoDecodeH264ReferenceInfo *)val->pStdReferenceInfo);
+    } else {
+        val->pStdReferenceInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+}
+
+static inline void
+vn_decode_VkVideoDecodeH264DpbSlotInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoDecodeH264DpbSlotInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_DPB_SLOT_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoDecodeH264DpbSlotInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoDecodeH264DpbSlotInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoDecodeH264DpbSlotInfoKHR_handle_self(VkVideoDecodeH264DpbSlotInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    if (val->pStdReferenceInfo)
+        vn_replace_StdVideoDecodeH264ReferenceInfo_handle((StdVideoDecodeH264ReferenceInfo *)val->pStdReferenceInfo);
+}
+
+static inline void
+vn_replace_VkVideoDecodeH264DpbSlotInfoKHR_handle(VkVideoDecodeH264DpbSlotInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_DPB_SLOT_INFO_KHR:
+            vn_replace_VkVideoDecodeH264DpbSlotInfoKHR_handle_self((VkVideoDecodeH264DpbSlotInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkVideoReferenceSlotInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoReferenceSlotInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    VkBaseOutStructure *pnext;
+    VkStructureType stype;
+
+    if (!vn_decode_simple_pointer(dec))
+        return NULL;
+
+    vn_decode_VkStructureType(dec, &stype);
+    switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_DPB_SLOT_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoDecodeH264DpbSlotInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoDecodeH264DpbSlotInfoKHR *)pnext)->pNext = vn_decode_VkVideoReferenceSlotInfoKHR_pnext_temp(dec);
+            vn_decode_VkVideoDecodeH264DpbSlotInfoKHR_self_temp(dec, (VkVideoDecodeH264DpbSlotInfoKHR *)pnext);
+        }
+        break;
+    default:
+        /* unexpected struct */
+        pnext = NULL;
+        vn_cs_decoder_set_fatal(dec);
+        break;
+    }
+
+    return pnext;
+}
+
+static inline void
+vn_decode_VkVideoReferenceSlotInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoReferenceSlotInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_int32_t(dec, &val->slotIndex);
+    if (vn_decode_simple_pointer(dec)) {
+        val->pPictureResource = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPictureResource));
+        if (!val->pPictureResource) return;
+        vn_decode_VkVideoPictureResourceInfoKHR_temp(dec, (VkVideoPictureResourceInfoKHR *)val->pPictureResource);
+    } else {
+        val->pPictureResource = NULL;
+    }
+}
+
+static inline void
+vn_decode_VkVideoReferenceSlotInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoReferenceSlotInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_REFERENCE_SLOT_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoReferenceSlotInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoReferenceSlotInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoReferenceSlotInfoKHR_handle_self(VkVideoReferenceSlotInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->slotIndex */
+    if (val->pPictureResource)
+        vn_replace_VkVideoPictureResourceInfoKHR_handle((VkVideoPictureResourceInfoKHR *)val->pPictureResource);
+}
+
+static inline void
+vn_replace_VkVideoReferenceSlotInfoKHR_handle(VkVideoReferenceSlotInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_REFERENCE_SLOT_INFO_KHR:
+            vn_replace_VkVideoReferenceSlotInfoKHR_handle_self((VkVideoReferenceSlotInfoKHR *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_DPB_SLOT_INFO_KHR:
+            vn_replace_VkVideoDecodeH264DpbSlotInfoKHR_handle_self((VkVideoDecodeH264DpbSlotInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct StdVideoDecodeH264PictureInfo */
+
+static inline void
+vn_decode_StdVideoDecodeH264PictureInfo_temp(struct vn_cs_decoder *dec, StdVideoDecodeH264PictureInfo *val)
+{
+    vn_decode_StdVideoDecodeH264PictureInfoFlags_temp(dec, &val->flags);
+    vn_decode_uint8_t(dec, &val->seq_parameter_set_id);
+    vn_decode_uint8_t(dec, &val->pic_parameter_set_id);
+    vn_decode_uint8_t(dec, &val->reserved1);
+    vn_decode_uint8_t(dec, &val->reserved2);
+    vn_decode_uint16_t(dec, &val->frame_num);
+    vn_decode_uint16_t(dec, &val->idr_pic_id);
+    {
+        const size_t array_size = vn_decode_array_size(dec, 2);
+        vn_decode_int32_t_array(dec, val->PicOrderCnt, array_size);
+    }
+}
+
+static inline void
+vn_replace_StdVideoDecodeH264PictureInfo_handle(StdVideoDecodeH264PictureInfo *val)
+{
+    vn_replace_StdVideoDecodeH264PictureInfoFlags_handle(&val->flags);
+    /* skip val->seq_parameter_set_id */
+    /* skip val->pic_parameter_set_id */
+    /* skip val->reserved1 */
+    /* skip val->reserved2 */
+    /* skip val->frame_num */
+    /* skip val->idr_pic_id */
+    /* skip val->PicOrderCnt */
+}
+
+/* struct VkVideoDecodeH264PictureInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoDecodeH264PictureInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkVideoDecodeH264PictureInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoDecodeH264PictureInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    if (vn_decode_simple_pointer(dec)) {
+        val->pStdPictureInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pStdPictureInfo));
+        if (!val->pStdPictureInfo) return;
+        vn_decode_StdVideoDecodeH264PictureInfo_temp(dec, (StdVideoDecodeH264PictureInfo *)val->pStdPictureInfo);
+    } else {
+        val->pStdPictureInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+    vn_decode_uint32_t(dec, &val->sliceCount);
+    if (vn_peek_array_size(dec)) {
+        const size_t array_size = vn_decode_array_size(dec, val->sliceCount);
+        val->pSliceOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pSliceOffsets), array_size);
+        if (!val->pSliceOffsets) return;
+        vn_decode_uint32_t_array(dec, (uint32_t *)val->pSliceOffsets, array_size);
+    } else {
+        vn_decode_array_size(dec, val->sliceCount);
+        val->pSliceOffsets = NULL;
+    }
+}
+
+static inline void
+vn_decode_VkVideoDecodeH264PictureInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoDecodeH264PictureInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoDecodeH264PictureInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoDecodeH264PictureInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoDecodeH264PictureInfoKHR_handle_self(VkVideoDecodeH264PictureInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    if (val->pStdPictureInfo)
+        vn_replace_StdVideoDecodeH264PictureInfo_handle((StdVideoDecodeH264PictureInfo *)val->pStdPictureInfo);
+    /* skip val->sliceCount */
+    /* skip val->pSliceOffsets */
+}
+
+static inline void
+vn_replace_VkVideoDecodeH264PictureInfoKHR_handle(VkVideoDecodeH264PictureInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_KHR:
+            vn_replace_VkVideoDecodeH264PictureInfoKHR_handle_self((VkVideoDecodeH264PictureInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkVideoDecodeInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoDecodeInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    VkBaseOutStructure *pnext;
+    VkStructureType stype;
+
+    if (!vn_decode_simple_pointer(dec))
+        return NULL;
+
+    vn_decode_VkStructureType(dec, &stype);
+    switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoDecodeH264PictureInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoDecodeH264PictureInfoKHR *)pnext)->pNext = vn_decode_VkVideoDecodeInfoKHR_pnext_temp(dec);
+            vn_decode_VkVideoDecodeH264PictureInfoKHR_self_temp(dec, (VkVideoDecodeH264PictureInfoKHR *)pnext);
+        }
+        break;
+    default:
+        /* unexpected struct */
+        pnext = NULL;
+        vn_cs_decoder_set_fatal(dec);
+        break;
+    }
+
+    return pnext;
+}
+
+static inline void
+vn_decode_VkVideoDecodeInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoDecodeInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkFlags(dec, &val->flags);
+    vn_decode_VkBuffer_lookup(dec, &val->srcBuffer);
+    vn_decode_VkDeviceSize(dec, &val->srcBufferOffset);
+    vn_decode_VkDeviceSize(dec, &val->srcBufferRange);
+    vn_decode_VkVideoPictureResourceInfoKHR_temp(dec, &val->dstPictureResource);
+    if (vn_decode_simple_pointer(dec)) {
+        val->pSetupReferenceSlot = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSetupReferenceSlot));
+        if (!val->pSetupReferenceSlot) return;
+        vn_decode_VkVideoReferenceSlotInfoKHR_temp(dec, (VkVideoReferenceSlotInfoKHR *)val->pSetupReferenceSlot);
+    } else {
+        val->pSetupReferenceSlot = NULL;
+    }
+    vn_decode_uint32_t(dec, &val->referenceSlotCount);
+    if (vn_peek_array_size(dec)) {
+        const uint32_t iter_count = vn_decode_array_size(dec, val->referenceSlotCount);
+        val->pReferenceSlots = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pReferenceSlots), iter_count);
+        if (!val->pReferenceSlots) return;
+        for (uint32_t i = 0; i < iter_count; i++)
+            vn_decode_VkVideoReferenceSlotInfoKHR_temp(dec, &((VkVideoReferenceSlotInfoKHR *)val->pReferenceSlots)[i]);
+    } else {
+        vn_decode_array_size(dec, val->referenceSlotCount);
+        val->pReferenceSlots = NULL;
+    }
+}
+
+static inline void
+vn_decode_VkVideoDecodeInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoDecodeInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_DECODE_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoDecodeInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoDecodeInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoDecodeInfoKHR_handle_self(VkVideoDecodeInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->flags */
+    vn_replace_VkBuffer_handle(&val->srcBuffer);
+    /* skip val->srcBufferOffset */
+    /* skip val->srcBufferRange */
+    vn_replace_VkVideoPictureResourceInfoKHR_handle(&val->dstPictureResource);
+    if (val->pSetupReferenceSlot)
+        vn_replace_VkVideoReferenceSlotInfoKHR_handle((VkVideoReferenceSlotInfoKHR *)val->pSetupReferenceSlot);
+    /* skip val->referenceSlotCount */
+    if (val->pReferenceSlots) {
+       for (uint32_t i = 0; i < val->referenceSlotCount; i++)
+            vn_replace_VkVideoReferenceSlotInfoKHR_handle(&((VkVideoReferenceSlotInfoKHR *)val->pReferenceSlots)[i]);
+    }
+}
+
+static inline void
+vn_replace_VkVideoDecodeInfoKHR_handle(VkVideoDecodeInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_INFO_KHR:
+            vn_replace_VkVideoDecodeInfoKHR_handle_self((VkVideoDecodeInfoKHR *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_KHR:
+            vn_replace_VkVideoDecodeH264PictureInfoKHR_handle_self((VkVideoDecodeH264PictureInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkVideoBeginCodingInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoBeginCodingInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkVideoBeginCodingInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoBeginCodingInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkFlags(dec, &val->flags);
+    vn_decode_VkVideoSessionKHR_lookup(dec, &val->videoSession);
+    vn_decode_VkVideoSessionParametersKHR_lookup(dec, &val->videoSessionParameters);
+    vn_decode_uint32_t(dec, &val->referenceSlotCount);
+    if (vn_peek_array_size(dec)) {
+        const uint32_t iter_count = vn_decode_array_size(dec, val->referenceSlotCount);
+        val->pReferenceSlots = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pReferenceSlots), iter_count);
+        if (!val->pReferenceSlots) return;
+        for (uint32_t i = 0; i < iter_count; i++)
+            vn_decode_VkVideoReferenceSlotInfoKHR_temp(dec, &((VkVideoReferenceSlotInfoKHR *)val->pReferenceSlots)[i]);
+    } else {
+        vn_decode_array_size(dec, val->referenceSlotCount);
+        val->pReferenceSlots = NULL;
+    }
+}
+
+static inline void
+vn_decode_VkVideoBeginCodingInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoBeginCodingInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_BEGIN_CODING_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoBeginCodingInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoBeginCodingInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoBeginCodingInfoKHR_handle_self(VkVideoBeginCodingInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->flags */
+    vn_replace_VkVideoSessionKHR_handle(&val->videoSession);
+    vn_replace_VkVideoSessionParametersKHR_handle(&val->videoSessionParameters);
+    /* skip val->referenceSlotCount */
+    if (val->pReferenceSlots) {
+       for (uint32_t i = 0; i < val->referenceSlotCount; i++)
+            vn_replace_VkVideoReferenceSlotInfoKHR_handle(&((VkVideoReferenceSlotInfoKHR *)val->pReferenceSlots)[i]);
+    }
+}
+
+static inline void
+vn_replace_VkVideoBeginCodingInfoKHR_handle(VkVideoBeginCodingInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_BEGIN_CODING_INFO_KHR:
+            vn_replace_VkVideoBeginCodingInfoKHR_handle_self((VkVideoBeginCodingInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkVideoCodingControlInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoCodingControlInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkVideoCodingControlInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoCodingControlInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkFlags(dec, &val->flags);
+}
+
+static inline void
+vn_decode_VkVideoCodingControlInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoCodingControlInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_CODING_CONTROL_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoCodingControlInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoCodingControlInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoCodingControlInfoKHR_handle_self(VkVideoCodingControlInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->flags */
+}
+
+static inline void
+vn_replace_VkVideoCodingControlInfoKHR_handle(VkVideoCodingControlInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_CODING_CONTROL_INFO_KHR:
+            vn_replace_VkVideoCodingControlInfoKHR_handle_self((VkVideoCodingControlInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkVideoEndCodingInfoKHR chain */
+
+static inline void *
+vn_decode_VkVideoEndCodingInfoKHR_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkVideoEndCodingInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoEndCodingInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkFlags(dec, &val->flags);
+}
+
+static inline void
+vn_decode_VkVideoEndCodingInfoKHR_temp(struct vn_cs_decoder *dec, VkVideoEndCodingInfoKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_VIDEO_END_CODING_INFO_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkVideoEndCodingInfoKHR_pnext_temp(dec);
+    vn_decode_VkVideoEndCodingInfoKHR_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkVideoEndCodingInfoKHR_handle_self(VkVideoEndCodingInfoKHR *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->flags */
+}
+
+static inline void
+vn_replace_VkVideoEndCodingInfoKHR_handle(VkVideoEndCodingInfoKHR *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_VIDEO_END_CODING_INFO_KHR:
+            vn_replace_VkVideoEndCodingInfoKHR_handle_self((VkVideoEndCodingInfoKHR *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
 /* struct VkRenderingAttachmentInfo chain */
 
 static inline void *
@@ -8053,6 +8705,118 @@ static inline void vn_encode_vkCmdWriteTimestamp2_reply(struct vn_cs_encoder *en
     /* skip args->query */
 }
 
+static inline void vn_decode_vkCmdDecodeVideoKHR_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdDecodeVideoKHR *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    if (vn_decode_simple_pointer(dec)) {
+        args->pDecodeInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDecodeInfo));
+        if (!args->pDecodeInfo) return;
+        vn_decode_VkVideoDecodeInfoKHR_temp(dec, (VkVideoDecodeInfoKHR *)args->pDecodeInfo);
+    } else {
+        args->pDecodeInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+}
+
+static inline void vn_replace_vkCmdDecodeVideoKHR_args_handle(struct vn_command_vkCmdDecodeVideoKHR *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    if (args->pDecodeInfo)
+        vn_replace_VkVideoDecodeInfoKHR_handle((VkVideoDecodeInfoKHR *)args->pDecodeInfo);
+}
+
+static inline void vn_encode_vkCmdDecodeVideoKHR_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdDecodeVideoKHR *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdDecodeVideoKHR_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->pDecodeInfo */
+}
+
+static inline void vn_decode_vkCmdBeginVideoCodingKHR_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdBeginVideoCodingKHR *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    if (vn_decode_simple_pointer(dec)) {
+        args->pBeginInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBeginInfo));
+        if (!args->pBeginInfo) return;
+        vn_decode_VkVideoBeginCodingInfoKHR_temp(dec, (VkVideoBeginCodingInfoKHR *)args->pBeginInfo);
+    } else {
+        args->pBeginInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+}
+
+static inline void vn_replace_vkCmdBeginVideoCodingKHR_args_handle(struct vn_command_vkCmdBeginVideoCodingKHR *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    if (args->pBeginInfo)
+        vn_replace_VkVideoBeginCodingInfoKHR_handle((VkVideoBeginCodingInfoKHR *)args->pBeginInfo);
+}
+
+static inline void vn_encode_vkCmdBeginVideoCodingKHR_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdBeginVideoCodingKHR *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdBeginVideoCodingKHR_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->pBeginInfo */
+}
+
+static inline void vn_decode_vkCmdControlVideoCodingKHR_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdControlVideoCodingKHR *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    if (vn_decode_simple_pointer(dec)) {
+        args->pCodingControlInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCodingControlInfo));
+        if (!args->pCodingControlInfo) return;
+        vn_decode_VkVideoCodingControlInfoKHR_temp(dec, (VkVideoCodingControlInfoKHR *)args->pCodingControlInfo);
+    } else {
+        args->pCodingControlInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+}
+
+static inline void vn_replace_vkCmdControlVideoCodingKHR_args_handle(struct vn_command_vkCmdControlVideoCodingKHR *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    if (args->pCodingControlInfo)
+        vn_replace_VkVideoCodingControlInfoKHR_handle((VkVideoCodingControlInfoKHR *)args->pCodingControlInfo);
+}
+
+static inline void vn_encode_vkCmdControlVideoCodingKHR_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdControlVideoCodingKHR *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdControlVideoCodingKHR_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->pCodingControlInfo */
+}
+
+static inline void vn_decode_vkCmdEndVideoCodingKHR_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdEndVideoCodingKHR *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    if (vn_decode_simple_pointer(dec)) {
+        args->pEndCodingInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pEndCodingInfo));
+        if (!args->pEndCodingInfo) return;
+        vn_decode_VkVideoEndCodingInfoKHR_temp(dec, (VkVideoEndCodingInfoKHR *)args->pEndCodingInfo);
+    } else {
+        args->pEndCodingInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+}
+
+static inline void vn_replace_vkCmdEndVideoCodingKHR_args_handle(struct vn_command_vkCmdEndVideoCodingKHR *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    if (args->pEndCodingInfo)
+        vn_replace_VkVideoEndCodingInfoKHR_handle((VkVideoEndCodingInfoKHR *)args->pEndCodingInfo);
+}
+
+static inline void vn_encode_vkCmdEndVideoCodingKHR_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdEndVideoCodingKHR *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdEndVideoCodingKHR_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->pEndCodingInfo */
+}
+
 static inline void vn_decode_vkCmdBeginRendering_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdBeginRendering *args)
 {
     vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
@@ -12201,6 +12965,118 @@ static inline void vn_dispatch_vkCmdWriteTimestamp2(struct vn_dispatch_context *
     if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder)) {
         if (vn_cs_encoder_acquire(ctx->encoder)) {
             vn_encode_vkCmdWriteTimestamp2_reply(ctx->encoder, &args);
+            vn_cs_encoder_release(ctx->encoder);
+        }
+    }
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdDecodeVideoKHR(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdDecodeVideoKHR args;
+
+    if (!ctx->dispatch_vkCmdDecodeVideoKHR) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdDecodeVideoKHR_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdDecodeVideoKHR(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder)) {
+        if (vn_cs_encoder_acquire(ctx->encoder)) {
+            vn_encode_vkCmdDecodeVideoKHR_reply(ctx->encoder, &args);
+            vn_cs_encoder_release(ctx->encoder);
+        }
+    }
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdBeginVideoCodingKHR(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdBeginVideoCodingKHR args;
+
+    if (!ctx->dispatch_vkCmdBeginVideoCodingKHR) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdBeginVideoCodingKHR_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdBeginVideoCodingKHR(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder)) {
+        if (vn_cs_encoder_acquire(ctx->encoder)) {
+            vn_encode_vkCmdBeginVideoCodingKHR_reply(ctx->encoder, &args);
+            vn_cs_encoder_release(ctx->encoder);
+        }
+    }
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdControlVideoCodingKHR(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdControlVideoCodingKHR args;
+
+    if (!ctx->dispatch_vkCmdControlVideoCodingKHR) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdControlVideoCodingKHR_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdControlVideoCodingKHR(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder)) {
+        if (vn_cs_encoder_acquire(ctx->encoder)) {
+            vn_encode_vkCmdControlVideoCodingKHR_reply(ctx->encoder, &args);
+            vn_cs_encoder_release(ctx->encoder);
+        }
+    }
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdEndVideoCodingKHR(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdEndVideoCodingKHR args;
+
+    if (!ctx->dispatch_vkCmdEndVideoCodingKHR) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdEndVideoCodingKHR_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdEndVideoCodingKHR(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder)) {
+        if (vn_cs_encoder_acquire(ctx->encoder)) {
+            vn_encode_vkCmdEndVideoCodingKHR_reply(ctx->encoder, &args);
             vn_cs_encoder_release(ctx->encoder);
         }
     }

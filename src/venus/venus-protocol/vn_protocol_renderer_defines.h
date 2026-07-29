@@ -479,6 +479,19 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetPhysicalDeviceDescriptorSizeEXT_EXT = 343,
     VK_COMMAND_TYPE_vkRegisterCustomBorderColorEXT_EXT = 344,
     VK_COMMAND_TYPE_vkUnregisterCustomBorderColorEXT_EXT = 345,
+    VK_COMMAND_TYPE_vkGetPhysicalDeviceVideoCapabilitiesKHR_EXT = 346,
+    VK_COMMAND_TYPE_vkGetPhysicalDeviceVideoFormatPropertiesKHR_EXT = 347,
+    VK_COMMAND_TYPE_vkCreateVideoSessionKHR_EXT = 348,
+    VK_COMMAND_TYPE_vkDestroyVideoSessionKHR_EXT = 349,
+    VK_COMMAND_TYPE_vkGetVideoSessionMemoryRequirementsKHR_EXT = 350,
+    VK_COMMAND_TYPE_vkBindVideoSessionMemoryKHR_EXT = 351,
+    VK_COMMAND_TYPE_vkCreateVideoSessionParametersKHR_EXT = 352,
+    VK_COMMAND_TYPE_vkUpdateVideoSessionParametersKHR_EXT = 353,
+    VK_COMMAND_TYPE_vkDestroyVideoSessionParametersKHR_EXT = 354,
+    VK_COMMAND_TYPE_vkCmdBeginVideoCodingKHR_EXT = 355,
+    VK_COMMAND_TYPE_vkCmdEndVideoCodingKHR_EXT = 356,
+    VK_COMMAND_TYPE_vkCmdControlVideoCodingKHR_EXT = 357,
+    VK_COMMAND_TYPE_vkCmdDecodeVideoKHR_EXT = 358,
 } VkCommandTypeEXT;
 
 typedef enum VkCommandFlagBitsEXT {
@@ -2794,6 +2807,99 @@ struct vn_command_vkTransitionImageLayout {
     VkResult ret;
 };
 
+struct vn_command_vkGetPhysicalDeviceVideoCapabilitiesKHR {
+    VkPhysicalDevice physicalDevice;
+    const VkVideoProfileInfoKHR* pVideoProfile;
+    VkVideoCapabilitiesKHR* pCapabilities;
+
+    VkResult ret;
+};
+
+struct vn_command_vkGetPhysicalDeviceVideoFormatPropertiesKHR {
+    VkPhysicalDevice physicalDevice;
+    const VkPhysicalDeviceVideoFormatInfoKHR* pVideoFormatInfo;
+    uint32_t* pVideoFormatPropertyCount;
+    VkVideoFormatPropertiesKHR* pVideoFormatProperties;
+
+    VkResult ret;
+};
+
+struct vn_command_vkCreateVideoSessionKHR {
+    VkDevice device;
+    const VkVideoSessionCreateInfoKHR* pCreateInfo;
+    const VkAllocationCallbacks* pAllocator;
+    VkVideoSessionKHR* pVideoSession;
+
+    VkResult ret;
+};
+
+struct vn_command_vkDestroyVideoSessionKHR {
+    VkDevice device;
+    VkVideoSessionKHR videoSession;
+    const VkAllocationCallbacks* pAllocator;
+};
+
+struct vn_command_vkCreateVideoSessionParametersKHR {
+    VkDevice device;
+    const VkVideoSessionParametersCreateInfoKHR* pCreateInfo;
+    const VkAllocationCallbacks* pAllocator;
+    VkVideoSessionParametersKHR* pVideoSessionParameters;
+
+    VkResult ret;
+};
+
+struct vn_command_vkUpdateVideoSessionParametersKHR {
+    VkDevice device;
+    VkVideoSessionParametersKHR videoSessionParameters;
+    const VkVideoSessionParametersUpdateInfoKHR* pUpdateInfo;
+
+    VkResult ret;
+};
+
+struct vn_command_vkDestroyVideoSessionParametersKHR {
+    VkDevice device;
+    VkVideoSessionParametersKHR videoSessionParameters;
+    const VkAllocationCallbacks* pAllocator;
+};
+
+struct vn_command_vkGetVideoSessionMemoryRequirementsKHR {
+    VkDevice device;
+    VkVideoSessionKHR videoSession;
+    uint32_t* pMemoryRequirementsCount;
+    VkVideoSessionMemoryRequirementsKHR* pMemoryRequirements;
+
+    VkResult ret;
+};
+
+struct vn_command_vkBindVideoSessionMemoryKHR {
+    VkDevice device;
+    VkVideoSessionKHR videoSession;
+    uint32_t bindSessionMemoryInfoCount;
+    const VkBindVideoSessionMemoryInfoKHR* pBindSessionMemoryInfos;
+
+    VkResult ret;
+};
+
+struct vn_command_vkCmdDecodeVideoKHR {
+    VkCommandBuffer commandBuffer;
+    const VkVideoDecodeInfoKHR* pDecodeInfo;
+};
+
+struct vn_command_vkCmdBeginVideoCodingKHR {
+    VkCommandBuffer commandBuffer;
+    const VkVideoBeginCodingInfoKHR* pBeginInfo;
+};
+
+struct vn_command_vkCmdControlVideoCodingKHR {
+    VkCommandBuffer commandBuffer;
+    const VkVideoCodingControlInfoKHR* pCodingControlInfo;
+};
+
+struct vn_command_vkCmdEndVideoCodingKHR {
+    VkCommandBuffer commandBuffer;
+    const VkVideoEndCodingInfoKHR* pEndCodingInfo;
+};
+
 struct vn_command_vkCmdBeginRendering {
     VkCommandBuffer commandBuffer;
     const VkRenderingInfo* pRenderingInfo;
@@ -3362,6 +3468,19 @@ struct vn_dispatch_context {
     void (*dispatch_vkCopyImageToMemory)(struct vn_dispatch_context *ctx, struct vn_command_vkCopyImageToMemory *args);
     void (*dispatch_vkCopyImageToImage)(struct vn_dispatch_context *ctx, struct vn_command_vkCopyImageToImage *args);
     void (*dispatch_vkTransitionImageLayout)(struct vn_dispatch_context *ctx, struct vn_command_vkTransitionImageLayout *args);
+    void (*dispatch_vkGetPhysicalDeviceVideoCapabilitiesKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceVideoCapabilitiesKHR *args);
+    void (*dispatch_vkGetPhysicalDeviceVideoFormatPropertiesKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceVideoFormatPropertiesKHR *args);
+    void (*dispatch_vkCreateVideoSessionKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCreateVideoSessionKHR *args);
+    void (*dispatch_vkDestroyVideoSessionKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroyVideoSessionKHR *args);
+    void (*dispatch_vkCreateVideoSessionParametersKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCreateVideoSessionParametersKHR *args);
+    void (*dispatch_vkUpdateVideoSessionParametersKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkUpdateVideoSessionParametersKHR *args);
+    void (*dispatch_vkDestroyVideoSessionParametersKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroyVideoSessionParametersKHR *args);
+    void (*dispatch_vkGetVideoSessionMemoryRequirementsKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetVideoSessionMemoryRequirementsKHR *args);
+    void (*dispatch_vkBindVideoSessionMemoryKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkBindVideoSessionMemoryKHR *args);
+    void (*dispatch_vkCmdDecodeVideoKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDecodeVideoKHR *args);
+    void (*dispatch_vkCmdBeginVideoCodingKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBeginVideoCodingKHR *args);
+    void (*dispatch_vkCmdControlVideoCodingKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdControlVideoCodingKHR *args);
+    void (*dispatch_vkCmdEndVideoCodingKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdEndVideoCodingKHR *args);
     void (*dispatch_vkCmdBeginRendering)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBeginRendering *args);
     void (*dispatch_vkCmdEndRendering)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdEndRendering *args);
     void (*dispatch_vkGetImageSubresourceLayout2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetImageSubresourceLayout2 *args);

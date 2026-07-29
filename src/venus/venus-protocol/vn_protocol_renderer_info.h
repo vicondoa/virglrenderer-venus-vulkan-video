@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[187];
+      bool enabled[190];
       struct {
          bool ARM_rasterization_order_attachment_access;
          bool EXT_4444_formats;
@@ -195,6 +195,9 @@ struct vn_info_extension_table {
          bool KHR_uniform_buffer_standard_layout;
          bool KHR_variable_pointers;
          bool KHR_vertex_attribute_divisor;
+         bool KHR_video_decode_h264;
+         bool KHR_video_decode_queue;
+         bool KHR_video_queue;
          bool KHR_vulkan_memory_model;
          bool KHR_workgroup_memory_explicit_layout;
          bool KHR_zero_initialize_workgroup_memory;
@@ -214,8 +217,8 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 187;
-static const struct vn_info_extension _vn_info_extensions[187] = {
+static const uint32_t _vn_info_extension_count = 190;
+static const struct vn_info_extension _vn_info_extensions[190] = {
    { "VK_ARM_rasterization_order_attachment_access", 343, 1 },
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_attachment_feedback_loop_dynamic_state", 525, 1 },
@@ -397,6 +400,9 @@ static const struct vn_info_extension _vn_info_extensions[187] = {
    { "VK_KHR_uniform_buffer_standard_layout", 254, 1 },
    { "VK_KHR_variable_pointers", 121, 1 },
    { "VK_KHR_vertex_attribute_divisor", 526, 1 },
+   { "VK_KHR_video_decode_h264", 41, 9 },
+   { "VK_KHR_video_decode_queue", 25, 8 },
+   { "VK_KHR_video_queue", 24, 8 },
    { "VK_KHR_vulkan_memory_model", 212, 3 },
    { "VK_KHR_workgroup_memory_explicit_layout", 337, 1 },
    { "VK_KHR_zero_initialize_workgroup_memory", 326, 1 },

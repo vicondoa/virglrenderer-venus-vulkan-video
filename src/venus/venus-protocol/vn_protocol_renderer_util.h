@@ -52,6 +52,8 @@ struct vn_physical_device_proc_table {
    PFN_vkGetPhysicalDeviceSparseImageFormatProperties GetPhysicalDeviceSparseImageFormatProperties;
    PFN_vkGetPhysicalDeviceSparseImageFormatProperties2 GetPhysicalDeviceSparseImageFormatProperties2;
    PFN_vkGetPhysicalDeviceToolProperties GetPhysicalDeviceToolProperties;
+   PFN_vkGetPhysicalDeviceVideoCapabilitiesKHR GetPhysicalDeviceVideoCapabilitiesKHR;
+   PFN_vkGetPhysicalDeviceVideoFormatPropertiesKHR GetPhysicalDeviceVideoFormatPropertiesKHR;
 };
 
 struct vn_device_proc_table {
@@ -63,6 +65,7 @@ struct vn_device_proc_table {
    PFN_vkBindBufferMemory2 BindBufferMemory2;
    PFN_vkBindImageMemory BindImageMemory;
    PFN_vkBindImageMemory2 BindImageMemory2;
+   PFN_vkBindVideoSessionMemoryKHR BindVideoSessionMemoryKHR;
    PFN_vkBuildAccelerationStructuresKHR BuildAccelerationStructuresKHR;
    PFN_vkCmdBeginConditionalRenderingEXT CmdBeginConditionalRenderingEXT;
    PFN_vkCmdBeginQuery CmdBeginQuery;
@@ -71,6 +74,7 @@ struct vn_device_proc_table {
    PFN_vkCmdBeginRenderPass2 CmdBeginRenderPass2;
    PFN_vkCmdBeginRendering CmdBeginRendering;
    PFN_vkCmdBeginTransformFeedbackEXT CmdBeginTransformFeedbackEXT;
+   PFN_vkCmdBeginVideoCodingKHR CmdBeginVideoCodingKHR;
    PFN_vkCmdBindDescriptorSets CmdBindDescriptorSets;
    PFN_vkCmdBindDescriptorSets2 CmdBindDescriptorSets2;
    PFN_vkCmdBindIndexBuffer CmdBindIndexBuffer;
@@ -88,6 +92,7 @@ struct vn_device_proc_table {
    PFN_vkCmdClearAttachments CmdClearAttachments;
    PFN_vkCmdClearColorImage CmdClearColorImage;
    PFN_vkCmdClearDepthStencilImage CmdClearDepthStencilImage;
+   PFN_vkCmdControlVideoCodingKHR CmdControlVideoCodingKHR;
    PFN_vkCmdCopyAccelerationStructureKHR CmdCopyAccelerationStructureKHR;
    PFN_vkCmdCopyAccelerationStructureToMemoryKHR CmdCopyAccelerationStructureToMemoryKHR;
    PFN_vkCmdCopyBuffer CmdCopyBuffer;
@@ -100,6 +105,7 @@ struct vn_device_proc_table {
    PFN_vkCmdCopyImageToBuffer2 CmdCopyImageToBuffer2;
    PFN_vkCmdCopyMemoryToAccelerationStructureKHR CmdCopyMemoryToAccelerationStructureKHR;
    PFN_vkCmdCopyQueryPoolResults CmdCopyQueryPoolResults;
+   PFN_vkCmdDecodeVideoKHR CmdDecodeVideoKHR;
    PFN_vkCmdDispatch CmdDispatch;
    PFN_vkCmdDispatchBase CmdDispatchBase;
    PFN_vkCmdDispatchIndirect CmdDispatchIndirect;
@@ -122,6 +128,7 @@ struct vn_device_proc_table {
    PFN_vkCmdEndRenderPass2 CmdEndRenderPass2;
    PFN_vkCmdEndRendering CmdEndRendering;
    PFN_vkCmdEndTransformFeedbackEXT CmdEndTransformFeedbackEXT;
+   PFN_vkCmdEndVideoCodingKHR CmdEndVideoCodingKHR;
    PFN_vkCmdExecuteCommands CmdExecuteCommands;
    PFN_vkCmdFillBuffer CmdFillBuffer;
    PFN_vkCmdNextSubpass CmdNextSubpass;
@@ -241,6 +248,8 @@ struct vn_device_proc_table {
    PFN_vkCreateSamplerYcbcrConversion CreateSamplerYcbcrConversion;
    PFN_vkCreateSemaphore CreateSemaphore;
    PFN_vkCreateShaderModule CreateShaderModule;
+   PFN_vkCreateVideoSessionKHR CreateVideoSessionKHR;
+   PFN_vkCreateVideoSessionParametersKHR CreateVideoSessionParametersKHR;
    PFN_vkDeferredOperationJoinKHR DeferredOperationJoinKHR;
    PFN_vkDestroyAccelerationStructureKHR DestroyAccelerationStructureKHR;
    PFN_vkDestroyBuffer DestroyBuffer;
@@ -266,6 +275,8 @@ struct vn_device_proc_table {
    PFN_vkDestroySamplerYcbcrConversion DestroySamplerYcbcrConversion;
    PFN_vkDestroySemaphore DestroySemaphore;
    PFN_vkDestroyShaderModule DestroyShaderModule;
+   PFN_vkDestroyVideoSessionKHR DestroyVideoSessionKHR;
+   PFN_vkDestroyVideoSessionParametersKHR DestroyVideoSessionParametersKHR;
    PFN_vkDeviceWaitIdle DeviceWaitIdle;
    PFN_vkEndCommandBuffer EndCommandBuffer;
    PFN_vkFlushMappedMemoryRanges FlushMappedMemoryRanges;
@@ -315,6 +326,7 @@ struct vn_device_proc_table {
    PFN_vkGetRenderingAreaGranularity GetRenderingAreaGranularity;
    PFN_vkGetSemaphoreCounterValue GetSemaphoreCounterValue;
    PFN_vkGetSemaphoreFdKHR GetSemaphoreFdKHR;
+   PFN_vkGetVideoSessionMemoryRequirementsKHR GetVideoSessionMemoryRequirementsKHR;
    PFN_vkImportFenceFdKHR ImportFenceFdKHR;
    PFN_vkImportSemaphoreFdKHR ImportSemaphoreFdKHR;
    PFN_vkInvalidateMappedMemoryRanges InvalidateMappedMemoryRanges;
@@ -342,6 +354,7 @@ struct vn_device_proc_table {
    PFN_vkUnregisterCustomBorderColorEXT UnregisterCustomBorderColorEXT;
    PFN_vkUpdateDescriptorSetWithTemplate UpdateDescriptorSetWithTemplate;
    PFN_vkUpdateDescriptorSets UpdateDescriptorSets;
+   PFN_vkUpdateVideoSessionParametersKHR UpdateVideoSessionParametersKHR;
    PFN_vkWaitForFences WaitForFences;
    PFN_vkWaitSemaphores WaitSemaphores;
    PFN_vkWriteAccelerationStructuresPropertiesKHR WriteAccelerationStructuresPropertiesKHR;
@@ -432,6 +445,8 @@ vn_util_init_physical_device_proc_table(VkInstance instance,
    proc_table->GetPhysicalDeviceToolProperties = VN_GIPA(instance, vkGetPhysicalDeviceToolProperties);
    if (!proc_table->GetPhysicalDeviceToolProperties)
       proc_table->GetPhysicalDeviceToolProperties = VN_GIPA(instance, vkGetPhysicalDeviceToolPropertiesEXT);
+   proc_table->GetPhysicalDeviceVideoCapabilitiesKHR = VN_GIPA(instance, vkGetPhysicalDeviceVideoCapabilitiesKHR);
+   proc_table->GetPhysicalDeviceVideoFormatPropertiesKHR = VN_GIPA(instance, vkGetPhysicalDeviceVideoFormatPropertiesKHR);
 #undef VN_GIPA
 }
 
@@ -458,6 +473,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_1 ? VN_GDPA(dev, vkBindImageMemory2) :
       ext_table->KHR_bind_memory2 ? VN_GDPA(dev, vkBindImageMemory2KHR) :
       NULL;
+   proc_table->BindVideoSessionMemoryKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkBindVideoSessionMemoryKHR) :
+      NULL;
    proc_table->BuildAccelerationStructuresKHR =
       ext_table->KHR_acceleration_structure ? VN_GDPA(dev, vkBuildAccelerationStructuresKHR) :
       NULL;
@@ -479,6 +497,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       NULL;
    proc_table->CmdBeginTransformFeedbackEXT =
       ext_table->EXT_transform_feedback ? VN_GDPA(dev, vkCmdBeginTransformFeedbackEXT) :
+      NULL;
+   proc_table->CmdBeginVideoCodingKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkCmdBeginVideoCodingKHR) :
       NULL;
    proc_table->CmdBindDescriptorSets = VN_GDPA(dev, vkCmdBindDescriptorSets);
    proc_table->CmdBindDescriptorSets2 =
@@ -519,6 +540,9 @@ vn_util_init_device_proc_table(VkDevice dev,
    proc_table->CmdClearAttachments = VN_GDPA(dev, vkCmdClearAttachments);
    proc_table->CmdClearColorImage = VN_GDPA(dev, vkCmdClearColorImage);
    proc_table->CmdClearDepthStencilImage = VN_GDPA(dev, vkCmdClearDepthStencilImage);
+   proc_table->CmdControlVideoCodingKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkCmdControlVideoCodingKHR) :
+      NULL;
    proc_table->CmdCopyAccelerationStructureKHR =
       ext_table->KHR_acceleration_structure ? VN_GDPA(dev, vkCmdCopyAccelerationStructureKHR) :
       NULL;
@@ -549,6 +573,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       ext_table->KHR_acceleration_structure ? VN_GDPA(dev, vkCmdCopyMemoryToAccelerationStructureKHR) :
       NULL;
    proc_table->CmdCopyQueryPoolResults = VN_GDPA(dev, vkCmdCopyQueryPoolResults);
+   proc_table->CmdDecodeVideoKHR =
+      ext_table->KHR_video_decode_queue ? VN_GDPA(dev, vkCmdDecodeVideoKHR) :
+      NULL;
    proc_table->CmdDispatch = VN_GDPA(dev, vkCmdDispatch);
    proc_table->CmdDispatchBase =
       api_version >= VK_API_VERSION_1_1 ? VN_GDPA(dev, vkCmdDispatchBase) :
@@ -603,6 +630,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       NULL;
    proc_table->CmdEndTransformFeedbackEXT =
       ext_table->EXT_transform_feedback ? VN_GDPA(dev, vkCmdEndTransformFeedbackEXT) :
+      NULL;
+   proc_table->CmdEndVideoCodingKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkCmdEndVideoCodingKHR) :
       NULL;
    proc_table->CmdExecuteCommands = VN_GDPA(dev, vkCmdExecuteCommands);
    proc_table->CmdFillBuffer = VN_GDPA(dev, vkCmdFillBuffer);
@@ -920,6 +950,12 @@ vn_util_init_device_proc_table(VkDevice dev,
       NULL;
    proc_table->CreateSemaphore = VN_GDPA(dev, vkCreateSemaphore);
    proc_table->CreateShaderModule = VN_GDPA(dev, vkCreateShaderModule);
+   proc_table->CreateVideoSessionKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkCreateVideoSessionKHR) :
+      NULL;
+   proc_table->CreateVideoSessionParametersKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkCreateVideoSessionParametersKHR) :
+      NULL;
    proc_table->DeferredOperationJoinKHR =
       ext_table->KHR_deferred_host_operations ? VN_GDPA(dev, vkDeferredOperationJoinKHR) :
       NULL;
@@ -960,6 +996,12 @@ vn_util_init_device_proc_table(VkDevice dev,
       NULL;
    proc_table->DestroySemaphore = VN_GDPA(dev, vkDestroySemaphore);
    proc_table->DestroyShaderModule = VN_GDPA(dev, vkDestroyShaderModule);
+   proc_table->DestroyVideoSessionKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkDestroyVideoSessionKHR) :
+      NULL;
+   proc_table->DestroyVideoSessionParametersKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkDestroyVideoSessionParametersKHR) :
+      NULL;
    proc_table->DeviceWaitIdle = VN_GDPA(dev, vkDeviceWaitIdle);
    proc_table->EndCommandBuffer = VN_GDPA(dev, vkEndCommandBuffer);
    proc_table->FlushMappedMemoryRanges = VN_GDPA(dev, vkFlushMappedMemoryRanges);
@@ -1092,6 +1134,9 @@ vn_util_init_device_proc_table(VkDevice dev,
    proc_table->GetSemaphoreFdKHR =
       ext_table->KHR_external_semaphore_fd ? VN_GDPA(dev, vkGetSemaphoreFdKHR) :
       NULL;
+   proc_table->GetVideoSessionMemoryRequirementsKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkGetVideoSessionMemoryRequirementsKHR) :
+      NULL;
    proc_table->ImportFenceFdKHR =
       ext_table->KHR_external_fence_fd ? VN_GDPA(dev, vkImportFenceFdKHR) :
       NULL;
@@ -1154,6 +1199,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       ext_table->KHR_descriptor_update_template ? VN_GDPA(dev, vkUpdateDescriptorSetWithTemplateKHR) :
       NULL;
    proc_table->UpdateDescriptorSets = VN_GDPA(dev, vkUpdateDescriptorSets);
+   proc_table->UpdateVideoSessionParametersKHR =
+      ext_table->KHR_video_queue ? VN_GDPA(dev, vkUpdateVideoSessionParametersKHR) :
+      NULL;
    proc_table->WaitForFences = VN_GDPA(dev, vkWaitForFences);
    proc_table->WaitSemaphores =
       api_version >= VK_API_VERSION_1_2 ? VN_GDPA(dev, vkWaitSemaphores) :

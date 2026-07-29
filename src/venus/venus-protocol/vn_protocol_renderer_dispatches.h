@@ -331,6 +331,19 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkCmdWriteTimestamp2_EXT: return "vkCmdWriteTimestamp2";
     case VK_COMMAND_TYPE_vkCopyImageToImage_EXT: return "vkCopyImageToImage";
     case VK_COMMAND_TYPE_vkTransitionImageLayout_EXT: return "vkTransitionImageLayout";
+    case VK_COMMAND_TYPE_vkGetPhysicalDeviceVideoCapabilitiesKHR_EXT: return "vkGetPhysicalDeviceVideoCapabilitiesKHR";
+    case VK_COMMAND_TYPE_vkGetPhysicalDeviceVideoFormatPropertiesKHR_EXT: return "vkGetPhysicalDeviceVideoFormatPropertiesKHR";
+    case VK_COMMAND_TYPE_vkCreateVideoSessionKHR_EXT: return "vkCreateVideoSessionKHR";
+    case VK_COMMAND_TYPE_vkDestroyVideoSessionKHR_EXT: return "vkDestroyVideoSessionKHR";
+    case VK_COMMAND_TYPE_vkCreateVideoSessionParametersKHR_EXT: return "vkCreateVideoSessionParametersKHR";
+    case VK_COMMAND_TYPE_vkUpdateVideoSessionParametersKHR_EXT: return "vkUpdateVideoSessionParametersKHR";
+    case VK_COMMAND_TYPE_vkDestroyVideoSessionParametersKHR_EXT: return "vkDestroyVideoSessionParametersKHR";
+    case VK_COMMAND_TYPE_vkGetVideoSessionMemoryRequirementsKHR_EXT: return "vkGetVideoSessionMemoryRequirementsKHR";
+    case VK_COMMAND_TYPE_vkBindVideoSessionMemoryKHR_EXT: return "vkBindVideoSessionMemoryKHR";
+    case VK_COMMAND_TYPE_vkCmdDecodeVideoKHR_EXT: return "vkCmdDecodeVideoKHR";
+    case VK_COMMAND_TYPE_vkCmdBeginVideoCodingKHR_EXT: return "vkCmdBeginVideoCodingKHR";
+    case VK_COMMAND_TYPE_vkCmdControlVideoCodingKHR_EXT: return "vkCmdControlVideoCodingKHR";
+    case VK_COMMAND_TYPE_vkCmdEndVideoCodingKHR_EXT: return "vkCmdEndVideoCodingKHR";
     case VK_COMMAND_TYPE_vkCmdBeginRendering_EXT: return "vkCmdBeginRendering";
     case VK_COMMAND_TYPE_vkCmdEndRendering_EXT: return "vkCmdEndRendering";
     case VK_COMMAND_TYPE_vkGetImageSubresourceLayout2_EXT: return "vkGetImageSubresourceLayout2";
@@ -393,7 +406,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     }
 }
 
-static void (*const vn_dispatch_table[346])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[359])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -681,6 +694,19 @@ static void (*const vn_dispatch_table[346])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkCmdWriteTimestamp2_EXT] = vn_dispatch_vkCmdWriteTimestamp2,
     [VK_COMMAND_TYPE_vkCopyImageToImage_EXT] = vn_dispatch_vkCopyImageToImage,
     [VK_COMMAND_TYPE_vkTransitionImageLayout_EXT] = vn_dispatch_vkTransitionImageLayout,
+    [VK_COMMAND_TYPE_vkGetPhysicalDeviceVideoCapabilitiesKHR_EXT] = vn_dispatch_vkGetPhysicalDeviceVideoCapabilitiesKHR,
+    [VK_COMMAND_TYPE_vkGetPhysicalDeviceVideoFormatPropertiesKHR_EXT] = vn_dispatch_vkGetPhysicalDeviceVideoFormatPropertiesKHR,
+    [VK_COMMAND_TYPE_vkCreateVideoSessionKHR_EXT] = vn_dispatch_vkCreateVideoSessionKHR,
+    [VK_COMMAND_TYPE_vkDestroyVideoSessionKHR_EXT] = vn_dispatch_vkDestroyVideoSessionKHR,
+    [VK_COMMAND_TYPE_vkCreateVideoSessionParametersKHR_EXT] = vn_dispatch_vkCreateVideoSessionParametersKHR,
+    [VK_COMMAND_TYPE_vkUpdateVideoSessionParametersKHR_EXT] = vn_dispatch_vkUpdateVideoSessionParametersKHR,
+    [VK_COMMAND_TYPE_vkDestroyVideoSessionParametersKHR_EXT] = vn_dispatch_vkDestroyVideoSessionParametersKHR,
+    [VK_COMMAND_TYPE_vkGetVideoSessionMemoryRequirementsKHR_EXT] = vn_dispatch_vkGetVideoSessionMemoryRequirementsKHR,
+    [VK_COMMAND_TYPE_vkBindVideoSessionMemoryKHR_EXT] = vn_dispatch_vkBindVideoSessionMemoryKHR,
+    [VK_COMMAND_TYPE_vkCmdDecodeVideoKHR_EXT] = vn_dispatch_vkCmdDecodeVideoKHR,
+    [VK_COMMAND_TYPE_vkCmdBeginVideoCodingKHR_EXT] = vn_dispatch_vkCmdBeginVideoCodingKHR,
+    [VK_COMMAND_TYPE_vkCmdControlVideoCodingKHR_EXT] = vn_dispatch_vkCmdControlVideoCodingKHR,
+    [VK_COMMAND_TYPE_vkCmdEndVideoCodingKHR_EXT] = vn_dispatch_vkCmdEndVideoCodingKHR,
     [VK_COMMAND_TYPE_vkCmdBeginRendering_EXT] = vn_dispatch_vkCmdBeginRendering,
     [VK_COMMAND_TYPE_vkCmdEndRendering_EXT] = vn_dispatch_vkCmdEndRendering,
     [VK_COMMAND_TYPE_vkGetImageSubresourceLayout2_EXT] = vn_dispatch_vkGetImageSubresourceLayout2,
@@ -730,7 +756,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
     vn_decode_VkFlags(ctx->decoder, &cmd_flags);
 
     {
-        if (cmd_type < 346 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 359 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);

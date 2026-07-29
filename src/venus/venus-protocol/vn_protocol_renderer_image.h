@@ -395,6 +395,14 @@ vn_decode_VkImageCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkImageStencilUsageCreateInfo_self_temp(dec, (VkImageStencilUsageCreateInfo *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoProfileListInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoProfileListInfoKHR *)pnext)->pNext = vn_decode_VkImageCreateInfo_pnext_temp(dec);
+            vn_decode_VkVideoProfileListInfoKHR_self_temp(dec, (VkVideoProfileListInfoKHR *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DATA_CREATE_INFO_EXT:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkOpaqueCaptureDataCreateInfoEXT));
         if (pnext) {
@@ -497,6 +505,9 @@ vn_replace_VkImageCreateInfo_handle(VkImageCreateInfo *val)
             break;
         case VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO:
             vn_replace_VkImageStencilUsageCreateInfo_handle_self((VkImageStencilUsageCreateInfo *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+            vn_replace_VkVideoProfileListInfoKHR_handle_self((VkVideoProfileListInfoKHR *)pnext);
             break;
         case VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DATA_CREATE_INFO_EXT:
             vn_replace_VkOpaqueCaptureDataCreateInfoEXT_handle_self((VkOpaqueCaptureDataCreateInfoEXT *)pnext);

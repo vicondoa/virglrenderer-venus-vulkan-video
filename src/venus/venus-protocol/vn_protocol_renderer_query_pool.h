@@ -22,10 +22,46 @@
 static inline void *
 vn_decode_VkQueryPoolCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
 {
-    /* no known/supported struct */
-    if (vn_decode_simple_pointer(dec))
+    VkBaseOutStructure *pnext;
+    VkStructureType stype;
+
+    if (!vn_decode_simple_pointer(dec))
+        return NULL;
+
+    vn_decode_VkStructureType(dec, &stype);
+    switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoProfileInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoProfileInfoKHR *)pnext)->pNext = vn_decode_VkQueryPoolCreateInfo_pnext_temp(dec);
+            vn_decode_VkVideoProfileInfoKHR_self_temp(dec, (VkVideoProfileInfoKHR *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_VIDEO_DECODE_USAGE_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoDecodeUsageInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoDecodeUsageInfoKHR *)pnext)->pNext = vn_decode_VkQueryPoolCreateInfo_pnext_temp(dec);
+            vn_decode_VkVideoDecodeUsageInfoKHR_self_temp(dec, (VkVideoDecodeUsageInfoKHR *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_INFO_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkVideoDecodeH264ProfileInfoKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            ((VkVideoDecodeH264ProfileInfoKHR *)pnext)->pNext = vn_decode_VkQueryPoolCreateInfo_pnext_temp(dec);
+            vn_decode_VkVideoDecodeH264ProfileInfoKHR_self_temp(dec, (VkVideoDecodeH264ProfileInfoKHR *)pnext);
+        }
+        break;
+    default:
+        /* unexpected struct */
+        pnext = NULL;
         vn_cs_decoder_set_fatal(dec);
-    return NULL;
+        break;
+    }
+
+    return pnext;
 }
 
 static inline void
@@ -71,6 +107,15 @@ vn_replace_VkQueryPoolCreateInfo_handle(VkQueryPoolCreateInfo *val)
         switch ((int32_t)pnext->sType) {
         case VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO:
             vn_replace_VkQueryPoolCreateInfo_handle_self((VkQueryPoolCreateInfo *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR:
+            vn_replace_VkVideoProfileInfoKHR_handle_self((VkVideoProfileInfoKHR *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_USAGE_INFO_KHR:
+            vn_replace_VkVideoDecodeUsageInfoKHR_handle_self((VkVideoDecodeUsageInfoKHR *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_INFO_KHR:
+            vn_replace_VkVideoDecodeH264ProfileInfoKHR_handle_self((VkVideoDecodeH264ProfileInfoKHR *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */
