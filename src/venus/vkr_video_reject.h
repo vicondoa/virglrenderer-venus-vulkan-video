@@ -467,6 +467,34 @@ vkr_video_reject_VkSemaphoreSubmitInfo(const VkSemaphoreSubmitInfo *s)
    return false;
 }
 
+static inline bool
+vkr_video_reject_present_VkVideoDecodeH264ProfileInfoKHR(const VkVideoDecodeH264ProfileInfoKHR *s)
+{
+   /* Presence is the violation; no member is legitimate here. */
+   return s != NULL;
+}
+
+static inline bool
+vkr_video_reject_present_VkVideoDecodeUsageInfoKHR(const VkVideoDecodeUsageInfoKHR *s)
+{
+   /* Presence is the violation; no member is legitimate here. */
+   return s != NULL;
+}
+
+static inline bool
+vkr_video_reject_present_VkVideoProfileInfoKHR(const VkVideoProfileInfoKHR *s)
+{
+   /* Presence is the violation; no member is legitimate here. */
+   return s != NULL;
+}
+
+static inline bool
+vkr_video_reject_present_VkVideoProfileListInfoKHR(const VkVideoProfileListInfoKHR *s)
+{
+   /* Presence is the violation; no member is legitimate here. */
+   return s != NULL;
+}
+
 /* Walk a pNext chain and reject any chained struct that carries a
  * video value. A chained struct is never reached by validating the
  * struct it hangs off: the guest attaches it to an ordinary create
@@ -479,16 +507,16 @@ vkr_video_reject_pnext(const void *pnext)
       switch (s->sType) {
       /* VkVideoDecodeH264ProfileInfoKHR: presence alone is the violation. */
       case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_INFO_KHR:
-         return true;
+         return vkr_video_reject_present_VkVideoDecodeH264ProfileInfoKHR((const VkVideoDecodeH264ProfileInfoKHR *)s);
       /* VkVideoDecodeUsageInfoKHR: presence alone is the violation. */
       case VK_STRUCTURE_TYPE_VIDEO_DECODE_USAGE_INFO_KHR:
-         return true;
+         return vkr_video_reject_present_VkVideoDecodeUsageInfoKHR((const VkVideoDecodeUsageInfoKHR *)s);
       /* VkVideoProfileInfoKHR: presence alone is the violation. */
       case VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR:
-         return true;
+         return vkr_video_reject_present_VkVideoProfileInfoKHR((const VkVideoProfileInfoKHR *)s);
       /* VkVideoProfileListInfoKHR: presence alone is the violation. */
       case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
-         return true;
+         return vkr_video_reject_present_VkVideoProfileListInfoKHR((const VkVideoProfileListInfoKHR *)s);
       case VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT:
          if (vkr_video_reject_VkAttachmentDescriptionStencilLayout((const VkAttachmentDescriptionStencilLayout *)s))
             return true;
