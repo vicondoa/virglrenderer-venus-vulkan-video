@@ -49,11 +49,17 @@ vkr_dispatch_vkTransitionImageLayout(UNUSED struct vn_dispatch_context *dispatch
 }
 
 static void
-vkr_dispatch_vkCopyImageToMemoryMESA(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCopyImageToMemoryMESA(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkCopyImageToMemoryMESA *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
+
+   if (args->pCopyImageToMemoryInfo &&
+       vkr_video_value_VkImageLayout(args->pCopyImageToMemoryInfo->srcImageLayout)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
 
    vn_replace_vkCopyImageToMemoryMESA_args_handle(args);
 
@@ -79,11 +85,17 @@ vkr_dispatch_vkCopyImageToMemoryMESA(UNUSED struct vn_dispatch_context *dispatch
 }
 
 static void
-vkr_dispatch_vkCopyMemoryToImageMESA(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCopyMemoryToImageMESA(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkCopyMemoryToImageMESA *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
+
+   if (args->pCopyMemoryToImageInfo &&
+       vkr_video_value_VkImageLayout(args->pCopyMemoryToImageInfo->dstImageLayout)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
 
    vn_replace_vkCopyMemoryToImageMESA_args_handle(args);
 
