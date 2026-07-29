@@ -35,6 +35,8 @@ vkr_dispatch_vkGetQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch,
                                    struct vn_command_vkGetQueryPoolResults *args)
 {
    if (vkr_video_value_VkQueryResultFlags(args->flags)) {
+      if (args->pData && args->dataSize)
+         memset(args->pData, 0, args->dataSize);
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }

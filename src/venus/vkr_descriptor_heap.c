@@ -50,6 +50,8 @@ vkr_dispatch_vkWriteResourceDescriptorMESA(
       if (img &&
           (vkr_video_reject_VkImageDescriptorInfoEXT(img) ||
            (img->pView && vkr_video_reject_pnext(img->pView->pNext)))) {
+         if (args->pData && args->dataSize)
+            memset(args->pData, 0, args->dataSize);
          args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
          return;
       }
