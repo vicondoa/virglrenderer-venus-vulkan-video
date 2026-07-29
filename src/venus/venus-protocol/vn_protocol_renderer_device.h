@@ -27786,6 +27786,10 @@ static inline void vn_decode_vkGetPhysicalDeviceVideoFormatPropertiesKHR_args_te
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, (args->pVideoFormatPropertyCount ? *args->pVideoFormatPropertyCount : 0));
+        if (iter_count > 256) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         args->pVideoFormatProperties = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pVideoFormatProperties), iter_count);
         if (!args->pVideoFormatProperties) return;
         for (uint32_t i = 0; i < iter_count; i++)

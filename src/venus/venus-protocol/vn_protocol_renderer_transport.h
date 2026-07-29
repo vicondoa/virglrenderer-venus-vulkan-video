@@ -1356,6 +1356,10 @@ static inline void vn_decode_vkGetVideoSessionMemoryRequirementsKHR_args_temp(st
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, (args->pMemoryRequirementsCount ? *args->pMemoryRequirementsCount : 0));
+        if (iter_count > 64) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         args->pMemoryRequirements = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pMemoryRequirements), iter_count);
         if (!args->pMemoryRequirements) return;
         for (uint32_t i = 0; i < iter_count; i++)
