@@ -229,6 +229,10 @@ vn_decode_StdVideoH264SequenceParameterSet_temp(struct vn_cs_decoder *dec, StdVi
     vn_decode_uint32_t(dec, &val->reserved2);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->num_ref_frames_in_pic_order_cnt_cycle);
+        if (array_size > 255) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pOffsetForRefFrame = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pOffsetForRefFrame), array_size);
         if (!val->pOffsetForRefFrame) return;
         vn_decode_int32_t_array(dec, (int32_t *)val->pOffsetForRefFrame, array_size);
@@ -343,6 +347,10 @@ vn_decode_VkVideoDecodeH264SessionParametersAddInfoKHR_self_temp(struct vn_cs_de
     vn_decode_uint32_t(dec, &val->stdSPSCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->stdSPSCount);
+        if (iter_count > 32) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pStdSPSs = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pStdSPSs), iter_count);
         if (!val->pStdSPSs) return;
         for (uint32_t i = 0; i < iter_count; i++)
@@ -354,6 +362,10 @@ vn_decode_VkVideoDecodeH264SessionParametersAddInfoKHR_self_temp(struct vn_cs_de
     vn_decode_uint32_t(dec, &val->stdPPSCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->stdPPSCount);
+        if (iter_count > 256) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pStdPPSs = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pStdPPSs), iter_count);
         if (!val->pStdPPSs) return;
         for (uint32_t i = 0; i < iter_count; i++)

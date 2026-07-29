@@ -3254,6 +3254,10 @@ vn_decode_VkVideoDecodeH264PictureInfoKHR_self_temp(struct vn_cs_decoder *dec, V
     vn_decode_uint32_t(dec, &val->sliceCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->sliceCount);
+        if (array_size > 65536) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pSliceOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pSliceOffsets), array_size);
         if (!val->pSliceOffsets) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pSliceOffsets, array_size);
