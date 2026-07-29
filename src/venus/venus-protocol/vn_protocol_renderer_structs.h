@@ -532,6 +532,10 @@ vn_decode_VkVideoProfileListInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideo
     vn_decode_uint32_t(dec, &val->profileCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->profileCount);
+        if (iter_count > 16) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pProfiles = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pProfiles), iter_count);
         if (!val->pProfiles) return;
         for (uint32_t i = 0; i < iter_count; i++)

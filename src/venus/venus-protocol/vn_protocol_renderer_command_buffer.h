@@ -3359,6 +3359,10 @@ vn_decode_VkVideoDecodeInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideoDecod
     vn_decode_uint32_t(dec, &val->referenceSlotCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->referenceSlotCount);
+        if (iter_count > 64) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pReferenceSlots = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pReferenceSlots), iter_count);
         if (!val->pReferenceSlots) return;
         for (uint32_t i = 0; i < iter_count; i++)
@@ -3443,6 +3447,10 @@ vn_decode_VkVideoBeginCodingInfoKHR_self_temp(struct vn_cs_decoder *dec, VkVideo
     vn_decode_uint32_t(dec, &val->referenceSlotCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->referenceSlotCount);
+        if (iter_count > 64) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         val->pReferenceSlots = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pReferenceSlots), iter_count);
         if (!val->pReferenceSlots) return;
         for (uint32_t i = 0; i < iter_count; i++)

@@ -1399,6 +1399,10 @@ static inline void vn_decode_vkBindVideoSessionMemoryKHR_args_temp(struct vn_cs_
     vn_decode_uint32_t(dec, &args->bindSessionMemoryInfoCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bindSessionMemoryInfoCount);
+        if (iter_count > 64) {
+            vn_cs_decoder_set_fatal(dec);
+            return;
+        }
         args->pBindSessionMemoryInfos = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBindSessionMemoryInfos), iter_count);
         if (!args->pBindSessionMemoryInfos) return;
         for (uint32_t i = 0; i < iter_count; i++)
