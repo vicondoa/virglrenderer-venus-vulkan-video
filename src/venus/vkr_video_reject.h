@@ -633,4 +633,20 @@ vkr_video_is_video_layout(VkImageLayout layout)
    }
 }
 
+/* Descriptor tags whose union arm decodes an image descriptor. */
+static inline bool
+vkr_video_descriptor_carries_image(VkDescriptorType type)
+{
+   switch (type) {
+   case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+   case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+   case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+   case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:
+   case VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM:
+      return true;
+   default:
+      return false;
+   }
+}
+
 #endif /* VKR_VIDEO_REJECT_H */

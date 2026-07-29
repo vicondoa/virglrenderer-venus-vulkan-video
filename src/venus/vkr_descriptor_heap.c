@@ -36,19 +36,13 @@ vkr_dispatch_vkWriteResourceDescriptorMESA(
    struct vn_command_vkWriteResourceDescriptorMESA *args)
 {
    if (args->pResource) {
-      bool is_image;
-
-      switch (args->pResource->type) {
-      case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-      case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-      case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-      case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-         is_image = true;
-         break;
-      default:
-         is_image = false;
-         break;
-      }
+      /* Which union arm is live is decided by the generated decoder, not
+       * by a list written here. The hand-written one was wrong both ways:
+       * it named COMBINED_IMAGE_SAMPLER, which is not a pImage arm, and
+       * omitted the two QCOM image tags, which are.
+       */
+      const bool is_image =
+         vkr_video_descriptor_carries_image(args->pResource->type);
 
       const VkImageDescriptorInfoEXT *img =
          is_image ? args->pResource->data.pImage : NULL;
