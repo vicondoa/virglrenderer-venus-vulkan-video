@@ -19,8 +19,7 @@ vkr_render_pass_has_video_layout(const VkRenderPassCreateInfo *info)
    if (!info)
       return false;
    for (uint32_t i = 0; i < info->attachmentCount; i++) {
-      if (vkr_video_reject_VkAttachmentDescription(&info->pAttachments[i]) ||
-          vkr_video_reject_pnext(info->pAttachments[i].pNext))
+      if (vkr_video_reject_VkAttachmentDescription(&info->pAttachments[i]))
          return true;
    }
    for (uint32_t i = 0; i < info->subpassCount; i++) {
