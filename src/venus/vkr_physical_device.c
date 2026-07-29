@@ -653,7 +653,8 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceImageFormatProperties *args)
 {
-   if (vkr_video_value_VkImageUsageFlags(args->usage)) {
+   if (vkr_video_value_VkImageUsageFlags(args->usage) ||
+       vkr_video_value_VkImageCreateFlags(args->flags)) {
       args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
       return;
    }

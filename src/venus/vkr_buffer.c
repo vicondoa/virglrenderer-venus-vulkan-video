@@ -38,9 +38,7 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
     * vkr_physical_device_init_memory_properties as well.
     */
 
-   if ((args->pCreateInfo &&
-        vkr_video_value_VkBufferCreateFlags(args->pCreateInfo->flags)) ||
-       vkr_video_reject_VkBufferCreateInfo(args->pCreateInfo) ||
+   if (vkr_video_reject_VkBufferCreateInfo(args->pCreateInfo) ||
        (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
@@ -150,9 +148,7 @@ vkr_dispatch_vkGetDeviceBufferMemoryRequirements(
    struct vn_dispatch_context *ctx,
    struct vn_command_vkGetDeviceBufferMemoryRequirements *args)
 {
-   if ((args->pInfo->pCreateInfo &&
-        vkr_video_value_VkBufferCreateFlags(args->pInfo->pCreateInfo->flags)) ||
-       vkr_video_reject_VkBufferCreateInfo(args->pInfo->pCreateInfo) ||
+   if (vkr_video_reject_VkBufferCreateInfo(args->pInfo->pCreateInfo) ||
        (args->pInfo->pCreateInfo &&
         vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
       vkr_context_set_fatal(ctx->data);

@@ -32,9 +32,7 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
     * situation because the app does not consider the memory external.
     */
 
-   if ((args->pCreateInfo &&
-        vkr_video_value_VkImageCreateFlags(args->pCreateInfo->flags)) ||
-       vkr_video_reject_VkImageCreateInfo(args->pCreateInfo) ||
+   if (vkr_video_reject_VkImageCreateInfo(args->pCreateInfo) ||
        (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
@@ -156,9 +154,7 @@ vkr_dispatch_vkGetDeviceImageSubresourceLayout(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetDeviceImageSubresourceLayout *args)
 {
-   if ((args->pInfo->pCreateInfo &&
-        vkr_video_value_VkImageCreateFlags(args->pInfo->pCreateInfo->flags)) ||
-       vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
+   if (vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
        (args->pInfo->pCreateInfo &&
         vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
       vkr_context_set_fatal(dispatch->data);
@@ -239,9 +235,7 @@ vkr_dispatch_vkGetDeviceImageMemoryRequirements(
    struct vn_dispatch_context *ctx,
    struct vn_command_vkGetDeviceImageMemoryRequirements *args)
 {
-   if ((args->pInfo->pCreateInfo &&
-        vkr_video_value_VkImageCreateFlags(args->pInfo->pCreateInfo->flags)) ||
-       vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
+   if (vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
        (args->pInfo->pCreateInfo &&
         vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
       vkr_context_set_fatal(ctx->data);
@@ -261,9 +255,7 @@ vkr_dispatch_vkGetDeviceImageSparseMemoryRequirements(
    struct vn_dispatch_context *ctx,
    struct vn_command_vkGetDeviceImageSparseMemoryRequirements *args)
 {
-   if ((args->pInfo->pCreateInfo &&
-        vkr_video_value_VkImageCreateFlags(args->pInfo->pCreateInfo->flags)) ||
-       vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
+   if (vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
        (args->pInfo->pCreateInfo &&
         vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
       vkr_context_set_fatal(ctx->data);

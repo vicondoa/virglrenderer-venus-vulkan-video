@@ -217,6 +217,8 @@ vkr_video_reject_VkBufferCreateInfo(const VkBufferCreateInfo *s)
 {
    if (!s)
       return false;
+   if (vkr_video_value_VkBufferCreateFlags(s->flags))
+      return true;
    if (vkr_video_value_VkBufferUsageFlags(s->usage))
       return true;
    return false;
@@ -307,6 +309,8 @@ vkr_video_reject_VkFramebufferAttachmentImageInfo(const VkFramebufferAttachmentI
 {
    if (!s)
       return false;
+   if (vkr_video_value_VkImageCreateFlags(s->flags))
+      return true;
    if (vkr_video_value_VkImageUsageFlags(s->usage))
       return true;
    return false;
@@ -329,6 +333,8 @@ vkr_video_reject_VkImageCreateInfo(const VkImageCreateInfo *s)
 {
    if (!s)
       return false;
+   if (vkr_video_value_VkImageCreateFlags(s->flags))
+      return true;
    if (vkr_video_value_VkImageLayout(s->initialLayout))
       return true;
    if (vkr_video_value_VkImageUsageFlags(s->usage))
@@ -419,6 +425,8 @@ vkr_video_reject_VkPhysicalDeviceExternalBufferInfo(const VkPhysicalDeviceExtern
 {
    if (!s)
       return false;
+   if (vkr_video_value_VkBufferCreateFlags(s->flags))
+      return true;
    if (vkr_video_value_VkBufferUsageFlags(s->usage))
       return true;
    return false;
@@ -429,6 +437,8 @@ vkr_video_reject_VkPhysicalDeviceImageFormatInfo2(const VkPhysicalDeviceImageFor
 {
    if (!s)
       return false;
+   if (vkr_video_value_VkImageCreateFlags(s->flags))
+      return true;
    if (vkr_video_value_VkImageUsageFlags(s->usage))
       return true;
    return false;
