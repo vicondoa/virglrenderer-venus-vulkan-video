@@ -54,10 +54,44 @@ vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
    vkr_render_pass_create_and_add(dispatch->data, args);
 }
 
+static bool
+vkr_render_pass2_has_video_layout(const VkRenderPassCreateInfo2 *info)
+{
+   if (!info)
+      return false;
+   for (uint32_t i = 0; i < info->attachmentCount; i++) {
+      if (vkr_video_reject_VkAttachmentDescription2(&info->pAttachments[i]))
+         return true;
+   }
+   for (uint32_t i = 0; i < info->subpassCount; i++) {
+      const VkSubpassDescription2 *sub = &info->pSubpasses[i];
+      for (uint32_t j = 0; j < sub->inputAttachmentCount; j++) {
+         if (vkr_video_reject_VkAttachmentReference2(&sub->pInputAttachments[j]))
+            return true;
+      }
+      for (uint32_t j = 0; j < sub->colorAttachmentCount; j++) {
+         if (vkr_video_reject_VkAttachmentReference2(&sub->pColorAttachments[j]))
+            return true;
+         if (sub->pResolveAttachments &&
+             vkr_video_reject_VkAttachmentReference2(&sub->pResolveAttachments[j]))
+            return true;
+      }
+      if (sub->pDepthStencilAttachment &&
+          vkr_video_reject_VkAttachmentReference2(sub->pDepthStencilAttachment))
+         return true;
+   }
+   return false;
+}
+
 static void
 vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCreateRenderPass2 *args)
 {
+   if (vkr_render_pass2_has_video_layout(args->pCreateInfo)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;

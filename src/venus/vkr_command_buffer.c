@@ -349,9 +349,14 @@ vkr_dispatch_vkCmdCopyImage(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdCopyImage2(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyImage2(struct vn_dispatch_context *dispatch,
                              struct vn_command_vkCmdCopyImage2 *args)
 {
+   if (vkr_video_reject_VkCopyImageInfo2(args->pCopyImageInfo)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyImage2, args, args->pCopyImageInfo);
 }
 
@@ -373,9 +378,14 @@ vkr_dispatch_vkCmdBlitImage(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdBlitImage2(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdBlitImage2(struct vn_dispatch_context *dispatch,
                              struct vn_command_vkCmdBlitImage2 *args)
 {
+   if (vkr_video_reject_VkBlitImageInfo2(args->pBlitImageInfo)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdBlitImage2, args, args->pBlitImageInfo);
 }
 
@@ -393,9 +403,14 @@ vkr_dispatch_vkCmdCopyBufferToImage(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdCopyBufferToImage2(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyBufferToImage2(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkCmdCopyBufferToImage2 *args)
 {
+   if (vkr_video_reject_VkCopyBufferToImageInfo2(args->pCopyBufferToImageInfo)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyBufferToImage2, args, args->pCopyBufferToImageInfo);
 }
 
@@ -413,9 +428,14 @@ vkr_dispatch_vkCmdCopyImageToBuffer(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdCopyImageToBuffer2(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdCopyImageToBuffer2(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkCmdCopyImageToBuffer2 *args)
 {
+   if (vkr_video_reject_VkCopyImageToBufferInfo2(args->pCopyImageToBufferInfo)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdCopyImageToBuffer2, args, args->pCopyImageToBufferInfo);
 }
 
@@ -488,9 +508,14 @@ vkr_dispatch_vkCmdResolveImage(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdResolveImage2(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdResolveImage2(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCmdResolveImage2 *args)
 {
+   if (vkr_video_reject_VkResolveImageInfo2(args->pResolveImageInfo)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdResolveImage2, args, args->pResolveImageInfo);
 }
 
@@ -883,10 +908,33 @@ vkr_dispatch_vkCmdEndConditionalRenderingEXT(
    VKR_CMD_CALL(CmdEndConditionalRenderingEXT, args);
 }
 
+static bool
+vkr_video_reject_rendering_info(const VkRenderingInfo *info)
+{
+   if (!info)
+      return false;
+   for (uint32_t i = 0; i < info->colorAttachmentCount; i++) {
+      if (vkr_video_reject_VkRenderingAttachmentInfo(&info->pColorAttachments[i]))
+         return true;
+   }
+   if (info->pDepthAttachment &&
+       vkr_video_reject_VkRenderingAttachmentInfo(info->pDepthAttachment))
+      return true;
+   if (info->pStencilAttachment &&
+       vkr_video_reject_VkRenderingAttachmentInfo(info->pStencilAttachment))
+      return true;
+   return false;
+}
+
 static void
-vkr_dispatch_vkCmdBeginRendering(UNUSED struct vn_dispatch_context *ctx,
+vkr_dispatch_vkCmdBeginRendering(struct vn_dispatch_context *ctx,
                                  struct vn_command_vkCmdBeginRendering *args)
 {
+   if (vkr_video_reject_rendering_info(args->pRenderingInfo)) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdBeginRendering, args, args->pRenderingInfo);
 }
 
