@@ -65,10 +65,30 @@ vkr_video_value_VkImageUsageFlags(VkImageUsageFlags value)
 }
 
 static inline bool
+vkr_video_value_VkObjectType(VkObjectType value)
+{
+   switch (value) {
+   case VK_OBJECT_TYPE_VIDEO_SESSION_KHR:
+   case VK_OBJECT_TYPE_VIDEO_SESSION_PARAMETERS_KHR:
+      return true;
+   default:
+      return false;
+   }
+}
+
+static inline bool
 vkr_video_value_VkPipelineStageFlags2(VkPipelineStageFlags2 value)
 {
    const VkPipelineStageFlags2 video =
       (VkPipelineStageFlags2)VK_PIPELINE_STAGE_2_VIDEO_DECODE_BIT_KHR;
+   return (value & video) != 0;
+}
+
+static inline bool
+vkr_video_value_VkQueryResultFlags(VkQueryResultFlags value)
+{
+   const VkQueryResultFlags video =
+      (VkQueryResultFlags)VK_QUERY_RESULT_WITH_STATUS_BIT_KHR;
    return (value & video) != 0;
 }
 
