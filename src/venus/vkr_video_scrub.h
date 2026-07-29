@@ -38,6 +38,22 @@
  */
 
 static inline void
+vkr_video_scrub_queue_family_properties(VkQueueFamilyProperties *props)
+{
+   props->queueFlags &= ~(VkQueueFlags)VKR_VIDEO_QUEUE_BITS;
+}
+
+static inline void
+vkr_video_scrub_queue_family_properties_array(VkQueueFamilyProperties *props,
+                                              uint32_t count)
+{
+   if (!props)
+      return;
+   for (uint32_t i = 0; i < count; i++)
+      vkr_video_scrub_queue_family_properties(&props[i]);
+}
+
+static inline void
 vkr_video_scrub_queue_family_properties2_array(VkQueueFamilyProperties2 *props,
                                                uint32_t count)
 {
