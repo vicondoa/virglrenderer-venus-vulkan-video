@@ -35,10 +35,26 @@ vkr_dispatch_vkWriteResourceDescriptorMESA(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkWriteResourceDescriptorMESA *args)
 {
-   if (args->pResource && args->pResource->pImage &&
-       vkr_video_reject_VkImageDescriptorInfoEXT(args->pResource->pImage)) {
-      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
-      return;
+   if (args->pResource) {
+      bool is_image;
+
+      switch (args->pResource->type) {
+      case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+      case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+      case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+      case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+         is_image = true;
+         break;
+      default:
+         is_image = false;
+         break;
+      }
+
+      if (is_image && args->pResource->data.pImage &&
+          vkr_video_reject_VkImageDescriptorInfoEXT(args->pResource->data.pImage)) {
+         args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+         return;
+      }
    }
 
    struct vkr_device *dev = vkr_device_from_handle(args->device);
