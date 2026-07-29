@@ -5,6 +5,8 @@
 
 #include "vkr_host_copy.h"
 
+#include "vkr_video_reject.h"
+
 #include "venus-protocol/vn_protocol_renderer_host_copy.h"
 
 #include "vkr_context.h"
@@ -14,6 +16,11 @@ static void
 vkr_dispatch_vkCopyImageToImage(UNUSED struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCopyImageToImage *args)
 {
+   if (vkr_video_reject_VkCopyImageToImageInfo(args->pCopyImageToImageInfo)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
@@ -25,6 +32,14 @@ static void
 vkr_dispatch_vkTransitionImageLayout(UNUSED struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkTransitionImageLayout *args)
 {
+   for (uint32_t i = 0; i < args->transitionCount; i++) {
+      if (vkr_video_reject_VkHostImageLayoutTransitionInfo(
+             &args->pTransitions[i])) {
+         args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+         return;
+      }
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 

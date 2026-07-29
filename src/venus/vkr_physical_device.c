@@ -798,6 +798,11 @@ vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 *args)
 {
+   if (vkr_video_reject_VkPhysicalDeviceSparseImageFormatInfo2(args->pFormatInfo)) {
+      args->pPropertyCount = 0;
+      return;
+   }
+
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
    struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;

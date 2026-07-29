@@ -5,6 +5,8 @@
 
 #include "vkr_queue.h"
 
+#include "vkr_video_reject.h"
+
 #include "venus-protocol/vn_protocol_renderer_queue.h"
 
 #include "vkr_context.h"
@@ -412,6 +414,22 @@ vkr_dispatch_vkQueueSubmit2(UNUSED struct vn_dispatch_context *dispatch,
                             struct vn_command_vkQueueSubmit2 *args)
 {
    TRACE_FUNC();
+
+   for (uint32_t i = 0; i < args->submitCount; i++) {
+      const VkSubmitInfo2 *sub = &args->pSubmits[i];
+      for (uint32_t j = 0; j < sub->waitSemaphoreInfoCount; j++) {
+         if (vkr_video_reject_VkSemaphoreSubmitInfo(&sub->pWaitSemaphoreInfos[j])) {
+            args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+            return;
+         }
+      }
+      for (uint32_t j = 0; j < sub->signalSemaphoreInfoCount; j++) {
+         if (vkr_video_reject_VkSemaphoreSubmitInfo(&sub->pSignalSemaphoreInfos[j])) {
+            args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+            return;
+         }
+      }
+   }
    struct vkr_queue *queue = vkr_queue_from_handle(args->queue);
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 

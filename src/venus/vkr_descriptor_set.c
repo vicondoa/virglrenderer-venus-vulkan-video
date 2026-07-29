@@ -5,6 +5,8 @@
 
 #include "vkr_descriptor_set.h"
 
+#include "vkr_video_reject.h"
+
 #include "vkr_descriptor_set_gen.h"
 
 static void
@@ -133,9 +135,21 @@ vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkUpdateDescriptorSets(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkUpdateDescriptorSets(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkUpdateDescriptorSets *args)
 {
+   for (uint32_t i = 0; i < args->descriptorWriteCount; i++) {
+      const VkWriteDescriptorSet *wr = &args->pDescriptorWrites[i];
+      if (!wr->pImageInfo)
+         continue;
+      for (uint32_t j = 0; j < wr->descriptorCount; j++) {
+         if (vkr_video_reject_VkDescriptorImageInfo(&wr->pImageInfo[j])) {
+            vkr_context_set_fatal(dispatch->data);
+            return;
+         }
+      }
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
