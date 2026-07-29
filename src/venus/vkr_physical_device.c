@@ -5,6 +5,8 @@
 
 #include "vkr_physical_device.h"
 
+#include "vkr_video_scrub.h"
+
 #include "venus-protocol/vn_protocol_renderer_device.h"
 
 #include "vkr_context.h"
@@ -613,6 +615,10 @@ vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties(
    vk->GetPhysicalDeviceQueueFamilyProperties(args->physicalDevice,
                                               args->pQueueFamilyPropertyCount,
                                               args->pQueueFamilyProperties);
+
+   vkr_video_scrub_queue_family_properties_array(
+      args->pQueueFamilyProperties,
+      args->pQueueFamilyPropertyCount ? *args->pQueueFamilyPropertyCount : 0);
 }
 
 static void
@@ -637,6 +643,8 @@ vkr_dispatch_vkGetPhysicalDeviceFormatProperties(
    vn_replace_vkGetPhysicalDeviceFormatProperties_args_handle(args);
    vk->GetPhysicalDeviceFormatProperties(args->physicalDevice, args->format,
                                          args->pFormatProperties);
+
+   vkr_video_scrub_format_properties(args->pFormatProperties);
 }
 
 static void
@@ -693,6 +701,8 @@ vkr_dispatch_vkGetPhysicalDeviceProperties2(
 
    vn_replace_vkGetPhysicalDeviceProperties2_args_handle(args);
    vk->GetPhysicalDeviceProperties2(args->physicalDevice, args->pProperties);
+
+   vkr_video_scrub_physical_device_properties2(args->pProperties);
 }
 
 static void
@@ -708,6 +718,10 @@ vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2(
    vk->GetPhysicalDeviceQueueFamilyProperties2(args->physicalDevice,
                                                args->pQueueFamilyPropertyCount,
                                                args->pQueueFamilyProperties);
+
+   vkr_video_scrub_queue_family_properties2_array(
+      args->pQueueFamilyProperties,
+      args->pQueueFamilyPropertyCount ? *args->pQueueFamilyPropertyCount : 0);
 }
 
 static void
@@ -743,6 +757,8 @@ vkr_dispatch_vkGetPhysicalDeviceFormatProperties2(
    vn_replace_vkGetPhysicalDeviceFormatProperties2_args_handle(args);
    vk->GetPhysicalDeviceFormatProperties2(args->physicalDevice, args->format,
                                           args->pFormatProperties);
+
+   vkr_video_scrub_format_properties2(args->pFormatProperties);
 }
 
 static void
