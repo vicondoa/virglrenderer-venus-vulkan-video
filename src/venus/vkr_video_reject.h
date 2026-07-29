@@ -477,6 +477,18 @@ vkr_video_reject_pnext(const void *pnext)
 {
    for (const VkBaseInStructure *s = pnext; s; s = s->pNext) {
       switch (s->sType) {
+      /* VkVideoDecodeH264ProfileInfoKHR: presence alone is the violation. */
+      case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_INFO_KHR:
+         return true;
+      /* VkVideoDecodeUsageInfoKHR: presence alone is the violation. */
+      case VK_STRUCTURE_TYPE_VIDEO_DECODE_USAGE_INFO_KHR:
+         return true;
+      /* VkVideoProfileInfoKHR: presence alone is the violation. */
+      case VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR:
+         return true;
+      /* VkVideoProfileListInfoKHR: presence alone is the violation. */
+      case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+         return true;
       case VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT:
          if (vkr_video_reject_VkAttachmentDescriptionStencilLayout((const VkAttachmentDescriptionStencilLayout *)s))
             return true;
