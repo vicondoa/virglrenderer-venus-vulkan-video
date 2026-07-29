@@ -151,9 +151,16 @@ vkr_dispatch_vkGetImageSubresourceLayout2(
 
 static void
 vkr_dispatch_vkGetDeviceImageSubresourceLayout(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetDeviceImageSubresourceLayout *args)
 {
+   if (vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
+       (args->pInfo->pCreateInfo &&
+        vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
@@ -225,9 +232,16 @@ vkr_dispatch_vkDestroySamplerYcbcrConversion(
 
 static void
 vkr_dispatch_vkGetDeviceImageMemoryRequirements(
-   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_dispatch_context *ctx,
    struct vn_command_vkGetDeviceImageMemoryRequirements *args)
 {
+   if (vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
+       (args->pInfo->pCreateInfo &&
+        vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
@@ -238,9 +252,16 @@ vkr_dispatch_vkGetDeviceImageMemoryRequirements(
 
 static void
 vkr_dispatch_vkGetDeviceImageSparseMemoryRequirements(
-   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_dispatch_context *ctx,
    struct vn_command_vkGetDeviceImageSparseMemoryRequirements *args)
 {
+   if (vkr_video_reject_VkImageCreateInfo(args->pInfo->pCreateInfo) ||
+       (args->pInfo->pCreateInfo &&
+        vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 

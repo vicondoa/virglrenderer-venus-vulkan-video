@@ -140,9 +140,16 @@ vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch,
 
 static void
 vkr_dispatch_vkGetDeviceBufferMemoryRequirements(
-   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_dispatch_context *ctx,
    struct vn_command_vkGetDeviceBufferMemoryRequirements *args)
 {
+   if (vkr_video_reject_VkBufferCreateInfo(args->pInfo->pCreateInfo) ||
+       (args->pInfo->pCreateInfo &&
+        vkr_video_reject_pnext(args->pInfo->pCreateInfo->pNext))) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 

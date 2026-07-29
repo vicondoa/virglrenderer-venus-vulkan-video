@@ -970,16 +970,28 @@ vkr_dispatch_vkCmdResetEvent2(struct vn_dispatch_context *ctx,
 }
 
 static void
-vkr_dispatch_vkCmdSetEvent2(UNUSED struct vn_dispatch_context *ctx,
+vkr_dispatch_vkCmdSetEvent2(struct vn_dispatch_context *ctx,
                             struct vn_command_vkCmdSetEvent2 *args)
 {
+   if (vkr_video_reject_dependency_info(args->pDependencyInfo)) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdSetEvent2, args, args->event, args->pDependencyInfo);
 }
 
 static void
-vkr_dispatch_vkCmdWaitEvents2(UNUSED struct vn_dispatch_context *ctx,
+vkr_dispatch_vkCmdWaitEvents2(struct vn_dispatch_context *ctx,
                               struct vn_command_vkCmdWaitEvents2 *args)
 {
+   for (uint32_t i = 0; i < args->eventCount; i++) {
+      if (vkr_video_reject_dependency_info(&args->pDependencyInfos[i])) {
+         vkr_context_set_fatal(ctx->data);
+         return;
+      }
+   }
+
    VKR_CMD_CALL(CmdWaitEvents2, args, args->eventCount, args->pEvents,
                 args->pDependencyInfos);
 }
