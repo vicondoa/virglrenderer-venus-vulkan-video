@@ -64,10 +64,15 @@ vkr_render_pass2_has_video_layout(const VkRenderPassCreateInfo2 *info)
           vkr_video_reject_pnext(info->pAttachments[i].pNext))
          return true;
    }
+   for (uint32_t i = 0; i < info->dependencyCount; i++) {
+      if (vkr_video_reject_pnext(info->pDependencies[i].pNext))
+         return true;
+   }
    for (uint32_t i = 0; i < info->subpassCount; i++) {
       const VkSubpassDescription2 *sub = &info->pSubpasses[i];
       for (uint32_t j = 0; j < sub->inputAttachmentCount; j++) {
-         if (vkr_video_reject_VkAttachmentReference2(&sub->pInputAttachments[j]))
+         if (vkr_video_reject_VkAttachmentReference2(&sub->pInputAttachments[j]) ||
+             vkr_video_reject_pnext(sub->pInputAttachments[j].pNext))
             return true;
       }
       for (uint32_t j = 0; j < sub->colorAttachmentCount; j++) {
