@@ -6,10 +6,41 @@
 #include "vkr_command_buffer.h"
 
 #include "vkr_command_buffer_gen.h"
+#include "vkr_video_reject.h"
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
+
+/* Barriers are the widest inbound video surface on ordinary commands: image
+ * barriers carry VkImageLayout, and the synchronization-2 forms additionally
+ * carry video stage and access bits. None of it requires a video command to be
+ * dispatched, so the values are rejected here rather than relied upon to be
+ * unreachable.
+ *
+ * These are void commands with no args->ret to carry a status, so a violation
+ * is a fatal decode error -- the same treatment the generated dispatch gives
+ * any other malformed stream.
+ */
+static bool
+vkr_video_reject_dependency_info(const VkDependencyInfo *dep)
+{
+   if (!dep)
+      return false;
+   for (uint32_t i = 0; i < dep->memoryBarrierCount; i++) {
+      if (vkr_video_reject_VkMemoryBarrier2(&dep->pMemoryBarriers[i]))
+         return true;
+   }
+   for (uint32_t i = 0; i < dep->bufferMemoryBarrierCount; i++) {
+      if (vkr_video_reject_VkBufferMemoryBarrier2(&dep->pBufferMemoryBarriers[i]))
+         return true;
+   }
+   for (uint32_t i = 0; i < dep->imageMemoryBarrierCount; i++) {
+      if (vkr_video_reject_VkImageMemoryBarrier2(&dep->pImageMemoryBarriers[i]))
+         return true;
+   }
+   return false;
+}
 
 #define VKR_CMD_CALL(cmd_name, args, ...)                                                \
    do {                                                                                  \
@@ -441,9 +472,16 @@ vkr_dispatch_vkCmdWaitEvents(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdPipelineBarrier(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdPipelineBarrier(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkCmdPipelineBarrier *args)
 {
+   for (uint32_t i = 0; i < args->imageMemoryBarrierCount; i++) {
+      if (vkr_video_reject_VkImageMemoryBarrier(&args->pImageMemoryBarriers[i])) {
+         vkr_context_set_fatal(dispatch->data);
+         return;
+      }
+   }
+
    VKR_CMD_CALL(CmdPipelineBarrier, args, args->srcStageMask, args->dstStageMask,
                 args->dependencyFlags, args->memoryBarrierCount, args->pMemoryBarriers,
                 args->bufferMemoryBarrierCount, args->pBufferMemoryBarriers,
@@ -808,9 +846,14 @@ vkr_dispatch_vkCmdEndRendering(UNUSED struct vn_dispatch_context *ctx,
 }
 
 static void
-vkr_dispatch_vkCmdPipelineBarrier2(UNUSED struct vn_dispatch_context *ctx,
+vkr_dispatch_vkCmdPipelineBarrier2(struct vn_dispatch_context *ctx,
                                    struct vn_command_vkCmdPipelineBarrier2 *args)
 {
+   if (vkr_video_reject_dependency_info(args->pDependencyInfo)) {
+      vkr_context_set_fatal(ctx->data);
+      return;
+   }
+
    VKR_CMD_CALL(CmdPipelineBarrier2, args, args->pDependencyInfo);
 }
 

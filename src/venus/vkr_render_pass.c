@@ -6,11 +6,51 @@
 #include "vkr_render_pass.h"
 
 #include "vkr_render_pass_gen.h"
+#include "vkr_video_reject.h"
+
+/* Attachments carry VkImageLayout, and three of its values are video decode
+ * layouts. Rejecting them here keeps a guest from naming a video layout on an
+ * ordinary render pass, which is reachable without any video command being
+ * dispatched.
+ */
+static bool
+vkr_render_pass_has_video_layout(const VkRenderPassCreateInfo *info)
+{
+   if (!info)
+      return false;
+   for (uint32_t i = 0; i < info->attachmentCount; i++) {
+      if (vkr_video_reject_VkAttachmentDescription(&info->pAttachments[i]))
+         return true;
+   }
+   for (uint32_t i = 0; i < info->subpassCount; i++) {
+      const VkSubpassDescription *sub = &info->pSubpasses[i];
+      for (uint32_t j = 0; j < sub->inputAttachmentCount; j++) {
+         if (vkr_video_reject_VkAttachmentReference(&sub->pInputAttachments[j]))
+            return true;
+      }
+      for (uint32_t j = 0; j < sub->colorAttachmentCount; j++) {
+         if (vkr_video_reject_VkAttachmentReference(&sub->pColorAttachments[j]))
+            return true;
+         if (sub->pResolveAttachments &&
+             vkr_video_reject_VkAttachmentReference(&sub->pResolveAttachments[j]))
+            return true;
+      }
+      if (sub->pDepthStencilAttachment &&
+          vkr_video_reject_VkAttachmentReference(sub->pDepthStencilAttachment))
+         return true;
+   }
+   return false;
+}
 
 static void
 vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCreateRenderPass *args)
 {
+   if (vkr_render_pass_has_video_layout(args->pCreateInfo)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    vkr_render_pass_create_and_add(dispatch->data, args);
 }
 
