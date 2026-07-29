@@ -40,6 +40,8 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
 
    if (vkr_video_reject_VkBufferCreateInfo(args->pCreateInfo) ||
        (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
+if (args->pBuffer)
+         *args->pBuffer = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }
@@ -129,6 +131,8 @@ vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCreateBufferView *args)
 {
    if (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext)) {
+if (args->pView)
+         *args->pView = VK_NULL_HANDLE;
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }
