@@ -57,6 +57,8 @@ vkr_dispatch_vkCopyImageToMemoryMESA(struct vn_dispatch_context *dispatch,
 
    if (args->pCopyImageToMemoryInfo &&
        vkr_video_value_VkImageLayout(args->pCopyImageToMemoryInfo->srcImageLayout)) {
+      if (args->pData && args->dataSize)
+         memset(args->pData, 0, args->dataSize);
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }

@@ -655,6 +655,9 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties(
 {
    if (vkr_video_value_VkImageUsageFlags(args->usage) ||
        vkr_video_value_VkImageCreateFlags(args->flags)) {
+      if (args->pImageFormatProperties)
+         memset(args->pImageFormatProperties, 0,
+                sizeof(*args->pImageFormatProperties));
       args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
       return;
    }
@@ -702,6 +705,80 @@ vkr_dispatch_vkGetPhysicalDeviceFeatures2(
    vk->GetPhysicalDeviceFeatures2(args->physicalDevice, args->pFeatures);
 }
 
+/* A capacity query returns only a count, and the scrub cannot filter a list it
+ * was not given -- so the count still told the guest how many video layouts the
+ * host supports, which is the one thing this boundary exists to hide. Leaving
+ * it alone was safe for correctness and wrong for disclosure.
+ *
+ * The count is re-derived by asking the host again with a scratch list and
+ * filtering that, so a capacity query reports exactly what a populated query
+ * would return.
+ */
+static void
+vkr_video_fix_layout_capacity(struct vn_physical_device_proc_table *vk,
+                              VkPhysicalDevice pdev,
+                              VkPhysicalDeviceProperties2 *props)
+{
+   if (!props)
+      return;
+
+   for (VkBaseOutStructure *s = props->pNext; s; s = s->pNext) {
+      uint32_t *src_count = NULL, *dst_count = NULL;
+      bool src_capacity = false, dst_capacity = false;
+
+      if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES) {
+         VkPhysicalDeviceHostImageCopyProperties *h = (void *)s;
+         src_capacity = !h->pCopySrcLayouts;
+         dst_capacity = !h->pCopyDstLayouts;
+         src_count = &h->copySrcLayoutCount;
+         dst_count = &h->copyDstLayoutCount;
+      } else if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES) {
+         VkPhysicalDeviceVulkan14Properties *h = (void *)s;
+         src_capacity = !h->pCopySrcLayouts;
+         dst_capacity = !h->pCopyDstLayouts;
+         src_count = &h->copySrcLayoutCount;
+         dst_count = &h->copyDstLayoutCount;
+      } else {
+         continue;
+      }
+
+      if (!(src_capacity || dst_capacity))
+         continue;
+
+      const uint32_t want_src = src_capacity && src_count ? *src_count : 0;
+      const uint32_t want_dst = dst_capacity && dst_count ? *dst_count : 0;
+      const uint32_t cap = want_src > want_dst ? want_src : want_dst;
+      if (!cap || cap > 256)
+         continue;
+
+      VkImageLayout scratch_src[256];
+      VkImageLayout scratch_dst[256];
+      VkPhysicalDeviceHostImageCopyProperties probe = {
+         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES,
+         .copySrcLayoutCount = want_src,
+         .pCopySrcLayouts = want_src ? scratch_src : NULL,
+         .copyDstLayoutCount = want_dst,
+         .pCopyDstLayouts = want_dst ? scratch_dst : NULL,
+      };
+      VkPhysicalDeviceProperties2 probe_props = {
+         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+         .pNext = &probe,
+      };
+      vk->GetPhysicalDeviceProperties2(pdev, &probe_props);
+
+      if (src_capacity && src_count) {
+         vkr_video_scrub_image_layout_list(probe.pCopySrcLayouts,
+                                           &probe.copySrcLayoutCount);
+         *src_count = probe.copySrcLayoutCount;
+      }
+      if (dst_capacity && dst_count) {
+         vkr_video_scrub_image_layout_list(probe.pCopyDstLayouts,
+                                           &probe.copyDstLayoutCount);
+         *dst_count = probe.copyDstLayoutCount;
+      }
+   }
+}
+
 static void
 vkr_dispatch_vkGetPhysicalDeviceProperties2(
    UNUSED struct vn_dispatch_context *dispatch,
@@ -715,6 +792,7 @@ vkr_dispatch_vkGetPhysicalDeviceProperties2(
    vk->GetPhysicalDeviceProperties2(args->physicalDevice, args->pProperties);
 
    vkr_video_scrub_physical_device_properties2(args->pProperties);
+   vkr_video_fix_layout_capacity(vk, args->physicalDevice, args->pProperties);
 }
 
 static void
@@ -781,6 +859,10 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
    if (vkr_video_reject_VkPhysicalDeviceImageFormatInfo2(args->pImageFormatInfo) ||
        (args->pImageFormatInfo &&
         vkr_video_reject_pnext(args->pImageFormatInfo->pNext))) {
+      /* sType and pNext survive: the reply encoder asserts on them. */
+      if (args->pImageFormatProperties)
+         memset(&args->pImageFormatProperties->imageFormatProperties, 0,
+                sizeof(args->pImageFormatProperties->imageFormatProperties));
       args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
       return;
    }
