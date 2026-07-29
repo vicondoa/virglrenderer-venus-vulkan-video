@@ -821,8 +821,10 @@ vkr_dispatch_vkGetPhysicalDeviceExternalBufferProperties(
    if (vkr_video_reject_VkPhysicalDeviceExternalBufferInfo(args->pExternalBufferInfo) ||
        (args->pExternalBufferInfo &&
         vkr_video_reject_pnext(args->pExternalBufferInfo->pNext))) {
-      memset(args->pExternalBufferProperties, 0,
-             sizeof(*args->pExternalBufferProperties));
+      if (args->pExternalBufferProperties) {
+         memset(&args->pExternalBufferProperties->externalMemoryProperties, 0,
+                sizeof(args->pExternalBufferProperties->externalMemoryProperties));
+      }
       return;
    }
 
