@@ -5,6 +5,8 @@
 
 #include "vkr_descriptor_heap.h"
 
+#include "vkr_video_reject.h"
+
 #include "venus-protocol/vn_protocol_renderer_descriptor_heap.h"
 
 #include "vkr_context.h"
@@ -33,6 +35,12 @@ vkr_dispatch_vkWriteResourceDescriptorMESA(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkWriteResourceDescriptorMESA *args)
 {
+   if (args->pResource && args->pResource->pImage &&
+       vkr_video_reject_VkImageDescriptorInfoEXT(args->pResource->pImage)) {
+      args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
+      return;
+   }
+
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 

@@ -545,6 +545,15 @@ vkr_video_reject_pnext(const void *pnext)
          if (vkr_video_reject_VkRenderingFragmentShadingRateAttachmentInfoKHR((const VkRenderingFragmentShadingRateAttachmentInfoKHR *)s))
             return true;
          break;
+      /* VkFramebufferAttachmentImageInfo elements live in an array on VkFramebufferAttachmentsCreateInfo. */
+      case VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO: {
+         const VkFramebufferAttachmentsCreateInfo *p = (const VkFramebufferAttachmentsCreateInfo *)s;
+         for (uint32_t i = 0; i < p->attachmentImageInfoCount; i++) {
+            if (vkr_video_reject_VkFramebufferAttachmentImageInfo(&p->pAttachmentImageInfos[i]))
+               return true;
+         }
+         break;
+      }
       default:
          break;
       }
