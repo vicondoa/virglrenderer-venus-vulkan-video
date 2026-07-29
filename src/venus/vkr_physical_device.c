@@ -777,6 +777,13 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceImageFormatProperties2 *args)
 {
+   if (vkr_video_reject_VkPhysicalDeviceImageFormatInfo2(args->pImageFormatInfo) ||
+       (args->pImageFormatInfo &&
+        vkr_video_reject_pnext(args->pImageFormatInfo->pNext))) {
+      args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
+      return;
+   }
+
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
    struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;
@@ -805,6 +812,14 @@ vkr_dispatch_vkGetPhysicalDeviceExternalBufferProperties(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceExternalBufferProperties *args)
 {
+   if (vkr_video_reject_VkPhysicalDeviceExternalBufferInfo(args->pExternalBufferInfo) ||
+       (args->pExternalBufferInfo &&
+        vkr_video_reject_pnext(args->pExternalBufferInfo->pNext))) {
+      memset(args->pExternalBufferProperties, 0,
+             sizeof(*args->pExternalBufferProperties));
+      return;
+   }
+
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
    struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;
