@@ -467,4 +467,49 @@ vkr_video_reject_VkSemaphoreSubmitInfo(const VkSemaphoreSubmitInfo *s)
    return false;
 }
 
+/* Walk a pNext chain and reject any chained struct that carries a
+ * video value. A chained struct is never reached by validating the
+ * struct it hangs off: the guest attaches it to an ordinary create
+ * info and the values ride in from the side.
+ */
+static inline bool
+vkr_video_reject_pnext(const void *pnext)
+{
+   for (const VkBaseInStructure *s = pnext; s; s = s->pNext) {
+      switch (s->sType) {
+      case VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT:
+         if (vkr_video_reject_VkAttachmentDescriptionStencilLayout((const VkAttachmentDescriptionStencilLayout *)s))
+            return true;
+         break;
+      case VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_STENCIL_LAYOUT:
+         if (vkr_video_reject_VkAttachmentReferenceStencilLayout((const VkAttachmentReferenceStencilLayout *)s))
+            return true;
+         break;
+      case VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO:
+         if (vkr_video_reject_VkBufferUsageFlags2CreateInfo((const VkBufferUsageFlags2CreateInfo *)s))
+            return true;
+         break;
+      case VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO:
+         if (vkr_video_reject_VkImageStencilUsageCreateInfo((const VkImageStencilUsageCreateInfo *)s))
+            return true;
+         break;
+      case VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO:
+         if (vkr_video_reject_VkImageViewUsageCreateInfo((const VkImageViewUsageCreateInfo *)s))
+            return true;
+         break;
+      case VK_STRUCTURE_TYPE_MEMORY_BARRIER_2:
+         if (vkr_video_reject_VkMemoryBarrier2((const VkMemoryBarrier2 *)s))
+            return true;
+         break;
+      case VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR:
+         if (vkr_video_reject_VkRenderingFragmentShadingRateAttachmentInfoKHR((const VkRenderingFragmentShadingRateAttachmentInfoKHR *)s))
+            return true;
+         break;
+      default:
+         break;
+      }
+   }
+   return false;
+}
+
 #endif /* VKR_VIDEO_REJECT_H */

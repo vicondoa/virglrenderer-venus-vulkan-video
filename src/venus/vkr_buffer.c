@@ -38,7 +38,8 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
     * vkr_physical_device_init_memory_properties as well.
     */
 
-   if (vkr_video_reject_VkBufferCreateInfo(args->pCreateInfo)) {
+   if (vkr_video_reject_VkBufferCreateInfo(args->pCreateInfo) ||
+       (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }

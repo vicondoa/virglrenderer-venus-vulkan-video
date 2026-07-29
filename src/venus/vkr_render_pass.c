@@ -19,7 +19,8 @@ vkr_render_pass_has_video_layout(const VkRenderPassCreateInfo *info)
    if (!info)
       return false;
    for (uint32_t i = 0; i < info->attachmentCount; i++) {
-      if (vkr_video_reject_VkAttachmentDescription(&info->pAttachments[i]))
+      if (vkr_video_reject_VkAttachmentDescription(&info->pAttachments[i]) ||
+          vkr_video_reject_pnext(info->pAttachments[i].pNext))
          return true;
    }
    for (uint32_t i = 0; i < info->subpassCount; i++) {
@@ -60,7 +61,8 @@ vkr_render_pass2_has_video_layout(const VkRenderPassCreateInfo2 *info)
    if (!info)
       return false;
    for (uint32_t i = 0; i < info->attachmentCount; i++) {
-      if (vkr_video_reject_VkAttachmentDescription2(&info->pAttachments[i]))
+      if (vkr_video_reject_VkAttachmentDescription2(&info->pAttachments[i]) ||
+          vkr_video_reject_pnext(info->pAttachments[i].pNext))
          return true;
    }
    for (uint32_t i = 0; i < info->subpassCount; i++) {

@@ -12,7 +12,8 @@ static void
 vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCreateQueryPool *args)
 {
-   if (vkr_video_reject_VkQueryPoolCreateInfo(args->pCreateInfo)) {
+   if (vkr_video_reject_VkQueryPoolCreateInfo(args->pCreateInfo) ||
+       (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }

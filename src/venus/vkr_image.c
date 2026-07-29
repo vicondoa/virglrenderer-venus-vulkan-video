@@ -32,7 +32,8 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
     * situation because the app does not consider the memory external.
     */
 
-   if (vkr_video_reject_VkImageCreateInfo(args->pCreateInfo)) {
+   if (vkr_video_reject_VkImageCreateInfo(args->pCreateInfo) ||
+       (args->pCreateInfo && vkr_video_reject_pnext(args->pCreateInfo->pNext))) {
       args->ret = VK_ERROR_FEATURE_NOT_PRESENT;
       return;
    }
