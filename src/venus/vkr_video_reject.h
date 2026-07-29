@@ -515,11 +515,31 @@ vkr_video_reject_present_VkVideoProfileListInfoKHR(const VkVideoProfileListInfoK
  * struct it hangs off: the guest attaches it to an ordinary create
  * info and the values ride in from the side.
  */
+static inline bool vkr_video_reject_pnext(const void *pnext);
+
 static inline bool
 vkr_video_reject_pnext(const void *pnext)
 {
    for (const VkBaseInStructure *s = pnext; s; s = s->pNext) {
       switch (s->sType) {
+      /* VkFragmentShadingRateAttachmentInfoKHR holds a nested attachment reference. */
+      case VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR: {
+         const VkFragmentShadingRateAttachmentInfoKHR *n = (const VkFragmentShadingRateAttachmentInfoKHR *)s;
+         if (n->pFragmentShadingRateAttachment &&
+             (vkr_video_reject_VkAttachmentReference2(n->pFragmentShadingRateAttachment) ||
+              vkr_video_reject_pnext(n->pFragmentShadingRateAttachment->pNext)))
+            return true;
+         break;
+      }
+      /* VkSubpassDescriptionDepthStencilResolve holds a nested attachment reference. */
+      case VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE: {
+         const VkSubpassDescriptionDepthStencilResolve *n = (const VkSubpassDescriptionDepthStencilResolve *)s;
+         if (n->pDepthStencilResolveAttachment &&
+             (vkr_video_reject_VkAttachmentReference2(n->pDepthStencilResolveAttachment) ||
+              vkr_video_reject_pnext(n->pDepthStencilResolveAttachment->pNext)))
+            return true;
+         break;
+      }
       /* VkVideoDecodeH264ProfileInfoKHR: presence alone is the violation. */
       case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_INFO_KHR:
          return vkr_video_reject_present_VkVideoDecodeH264ProfileInfoKHR((const VkVideoDecodeH264ProfileInfoKHR *)s);
