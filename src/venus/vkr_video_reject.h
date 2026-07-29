@@ -576,4 +576,41 @@ vkr_video_reject_pnext(const void *pnext)
    return false;
 }
 
+/* Outbound scrub masks, derived from the video extensions in vk.xml. */
+#define VKR_VIDEO_FORMAT_FEATURE_BITS \
+   (VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR | \
+    VK_FORMAT_FEATURE_VIDEO_DECODE_OUTPUT_BIT_KHR | \
+    VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR | \
+    VK_FORMAT_FEATURE_VIDEO_ENCODE_INPUT_BIT_KHR)
+
+#define VKR_VIDEO_FORMAT_FEATURE_BITS2 \
+   (VK_FORMAT_FEATURE_2_VIDEO_DECODE_DPB_BIT_KHR | \
+    VK_FORMAT_FEATURE_2_VIDEO_DECODE_OUTPUT_BIT_KHR | \
+    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_DPB_BIT_KHR | \
+    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_EMPHASIS_MAP_BIT_KHR | \
+    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_INPUT_BIT_KHR | \
+    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_QUANTIZATION_DELTA_MAP_BIT_KHR)
+
+#define VKR_VIDEO_QUEUE_BITS \
+   (VK_QUEUE_VIDEO_DECODE_BIT_KHR | \
+    VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+
+/* Every video image layout, for outbound layout-list compaction. */
+static inline bool
+vkr_video_is_video_layout(VkImageLayout layout)
+{
+   switch (layout) {
+   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_QUANTIZATION_MAP_KHR:
+   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_SRC_KHR:
+      return true;
+   default:
+      return false;
+   }
+}
+
 #endif /* VKR_VIDEO_REJECT_H */

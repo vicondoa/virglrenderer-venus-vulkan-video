@@ -54,6 +54,17 @@ vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
    vkr_render_pass_create_and_add(dispatch->data, args);
 }
 
+/* An attachment reference is decoded with its pNext chain, which can carry a
+ * stencil layout. Every reference goes through here so a newly handled
+ * reference site cannot be added with the chain walk quietly left off.
+ */
+static bool
+vkr_attachment_ref2_has_video(const VkAttachmentReference2 *ref)
+{
+   return vkr_video_reject_VkAttachmentReference2(ref) ||
+          vkr_video_reject_pnext(ref->pNext);
+}
+
 static bool
 vkr_render_pass2_has_video_layout(const VkRenderPassCreateInfo2 *info)
 {
@@ -70,20 +81,22 @@ vkr_render_pass2_has_video_layout(const VkRenderPassCreateInfo2 *info)
    }
    for (uint32_t i = 0; i < info->subpassCount; i++) {
       const VkSubpassDescription2 *sub = &info->pSubpasses[i];
+
+      if (vkr_video_reject_pnext(sub->pNext))
+         return true;
       for (uint32_t j = 0; j < sub->inputAttachmentCount; j++) {
-         if (vkr_video_reject_VkAttachmentReference2(&sub->pInputAttachments[j]) ||
-             vkr_video_reject_pnext(sub->pInputAttachments[j].pNext))
+         if (vkr_attachment_ref2_has_video(&sub->pInputAttachments[j]))
             return true;
       }
       for (uint32_t j = 0; j < sub->colorAttachmentCount; j++) {
-         if (vkr_video_reject_VkAttachmentReference2(&sub->pColorAttachments[j]))
+         if (vkr_attachment_ref2_has_video(&sub->pColorAttachments[j]))
             return true;
          if (sub->pResolveAttachments &&
-             vkr_video_reject_VkAttachmentReference2(&sub->pResolveAttachments[j]))
+             vkr_attachment_ref2_has_video(&sub->pResolveAttachments[j]))
             return true;
       }
       if (sub->pDepthStencilAttachment &&
-          vkr_video_reject_VkAttachmentReference2(sub->pDepthStencilAttachment))
+          vkr_attachment_ref2_has_video(sub->pDepthStencilAttachment))
          return true;
    }
    return false;

@@ -8,6 +8,9 @@
 
 #include "vkr_common.h"
 
+/* Video masks and layout predicate are GENERATED; see vkr_video_reject.h. */
+#include "vkr_video_reject.h"
+
 /*
  * Remove video capability from guest-visible replies while video is
  * unadvertised.
@@ -34,66 +37,6 @@
  * Remove this when video is genuinely supported end to end.
  */
 
-/* VkQueueFlagBits */
-/* Encode as well as decode: the boundary is that video is absent, not that
- * decode is absent. A host queue advertising encode would otherwise reach
- * the guest through the base queueFlags untouched. */
-#define VKR_VIDEO_QUEUE_BITS                                                             \
-   (VK_QUEUE_VIDEO_DECODE_BIT_KHR | VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
-
-/* VkFormatFeatureFlagBits */
-#define VKR_VIDEO_FORMAT_FEATURE_BITS                                                    \
-   (VK_FORMAT_FEATURE_VIDEO_DECODE_OUTPUT_BIT_KHR |                                      \
-    VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR |                                         \
-    VK_FORMAT_FEATURE_VIDEO_ENCODE_INPUT_BIT_KHR |                                       \
-    VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR)
-
-/* VkFormatFeatureFlagBits2 */
-#define VKR_VIDEO_FORMAT_FEATURE_BITS2                                                   \
-   (VK_FORMAT_FEATURE_2_VIDEO_DECODE_OUTPUT_BIT_KHR |                                    \
-    VK_FORMAT_FEATURE_2_VIDEO_DECODE_DPB_BIT_KHR |                                       \
-    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_INPUT_BIT_KHR |                                     \
-    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_DPB_BIT_KHR)
-
-static inline bool
-vkr_video_is_video_image_layout(VkImageLayout layout)
-{
-   switch (layout) {
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_SRC_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR:
-      return true;
-   default:
-      return false;
-   }
-}
-
-/* VkQueueFamilyProperties.queueFlags, on both queue-family query paths. */
-static inline void
-vkr_video_scrub_queue_family_properties(VkQueueFamilyProperties *props)
-{
-   props->queueFlags &= ~(VkQueueFlags)VKR_VIDEO_QUEUE_BITS;
-}
-
-static inline void
-vkr_video_scrub_queue_family_properties_array(VkQueueFamilyProperties *props,
-                                              uint32_t count)
-{
-   if (!props)
-      return;
-   for (uint32_t i = 0; i < count; i++)
-      vkr_video_scrub_queue_family_properties(&props[i]);
-}
-
-/*
- * The pNext chain of VkQueueFamilyProperties2 carries two video capability
- * structs of its own. Scrubbing the base queueFlags alone does not close the
- * leak: the capability also travels here, which is why the pNext walk exists
- * rather than a single field clear.
- */
 static inline void
 vkr_video_scrub_queue_family_properties2_array(VkQueueFamilyProperties2 *props,
                                                uint32_t count)
@@ -219,7 +162,7 @@ vkr_video_scrub_image_layout_list(VkImageLayout *layouts, uint32_t *count)
 
    uint32_t kept = 0;
    for (uint32_t i = 0; i < *count; i++) {
-      if (!vkr_video_is_video_image_layout(layouts[i]))
+      if (!vkr_video_is_video_layout(layouts[i]))
          layouts[kept++] = layouts[i];
    }
    *count = kept;
