@@ -6,6 +6,7 @@
 #include <inttypes.h>
 
 #include "vkr_video.h"
+#include "vkr_video_scrub.h"
 #include "vkr_video_validate.h"
 
 #include "venus-protocol/vn_protocol_renderer_command_buffer.h"
@@ -143,6 +144,13 @@ vkr_dispatch_vkGetPhysicalDeviceVideoFormatPropertiesKHR(
          kept++;
       }
       *args->pVideoFormatPropertyCount = kept;
+
+      /* Separate obligation from the row filter: a surviving row's flag
+       * members still carry whatever the host reported, including encode bits
+       * on a format that is both decode- and encode-capable.
+       */
+      vkr_video_scrub_video_format_properties_array(args->pVideoFormatProperties,
+                                                    kept);
    }
 }
 

@@ -238,4 +238,42 @@ vkr_video_scrub_physical_device_properties2(VkPhysicalDeviceProperties2 *props)
    }
 }
 
+/* Outbound scrub for the video format query reply.
+ *
+ * The format allowlist in vkr_video_validate.h decides WHICH format rows
+ * survive. It says nothing about the flag members on a surviving row, and the
+ * host is entitled to report a format that is both decode- and encode-capable
+ * with the encode bits set. Forwarding those tells the guest it may create
+ * encode images through a renderer with no encode implementation.
+ *
+ * So the row filter and this scrub are two obligations, not one. Treating the
+ * filter as covering both is the split-obligation mistake that produced false
+ * passes in the enforcement and reply-hygiene gates.
+ */
+static inline void
+vkr_video_scrub_video_format_properties(VkVideoFormatPropertiesKHR *props)
+{
+   const VkImageUsageFlags allowed_usage =
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_SAMPLED_BIT;
+
+   props->imageUsageFlags &= allowed_usage;
+   props->imageCreateFlags &=
+      ~(VkImageCreateFlags)VK_IMAGE_CREATE_VIDEO_PROFILE_INDEPENDENT_BIT_KHR;
+}
+
+static inline void
+vkr_video_scrub_video_format_properties_array(VkVideoFormatPropertiesKHR *props,
+                                              uint32_t count)
+{
+   if (!props)
+      return;
+   for (uint32_t i = 0; i < count; i++)
+      vkr_video_scrub_video_format_properties(&props[i]);
+}
+
 #endif /* VKR_VIDEO_SCRUB_H */
