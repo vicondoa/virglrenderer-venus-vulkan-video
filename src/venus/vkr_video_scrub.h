@@ -37,10 +37,30 @@
  * Remove this when video is genuinely supported end to end.
  */
 
+/* Queue capability, split by direction.
+ *
+ * The generated VKR_VIDEO_QUEUE_BITS mask covers decode AND encode, which was
+ * right while the renderer implemented neither. It now implements H.264
+ * decode, and leaving the decode bit scrubbed is not a safe default -- it is
+ * an incoherent one. The extension is advertised on the device while the
+ * queue that would carry it reports no video capability, so FFmpeg finds a
+ * video-capable device with no video-capable queue and falls back to software.
+ *
+ * So: strip ENCODE, pass DECODE. Stated as an explicit supported set rather
+ * than "everything except encode", so a future codec bit is denied by default
+ * and has to be named here to reach a guest.
+ */
+#define VKR_VIDEO_SUPPORTED_QUEUE_BITS ((VkQueueFlags)VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+
+#define VKR_VIDEO_SUPPORTED_CODEC_OPS                                                    \
+   ((VkVideoCodecOperationFlagsKHR)VK_VIDEO_CODEC_OPERATION_DECODE_H264_BIT_KHR)
+
 static inline void
 vkr_video_scrub_queue_family_properties(VkQueueFamilyProperties *props)
 {
-   props->queueFlags &= ~(VkQueueFlags)VKR_VIDEO_QUEUE_BITS;
+   const VkQueueFlags unsupported =
+      (VkQueueFlags)VKR_VIDEO_QUEUE_BITS & ~VKR_VIDEO_SUPPORTED_QUEUE_BITS;
+   props->queueFlags &= ~unsupported;
 }
 
 static inline void
@@ -66,7 +86,13 @@ vkr_video_scrub_queue_family_properties2_array(VkQueueFamilyProperties2 *props,
       for (VkBaseOutStructure *pnext = props[i].pNext; pnext; pnext = pnext->pNext) {
          switch (pnext->sType) {
          case VK_STRUCTURE_TYPE_QUEUE_FAMILY_VIDEO_PROPERTIES_KHR:
-            ((VkQueueFamilyVideoPropertiesKHR *)pnext)->videoCodecOperations = 0;
+            /* Report only the codec operations the renderer can carry.
+             * Zeroing this outright would leave the decode queue bit set with
+             * no codec named, which FFmpeg reads as "a video queue that
+             * decodes nothing" -- a video-capable device it cannot use.
+             */
+            ((VkQueueFamilyVideoPropertiesKHR *)pnext)->videoCodecOperations &=
+               VKR_VIDEO_SUPPORTED_CODEC_OPS;
             break;
          case VK_STRUCTURE_TYPE_QUEUE_FAMILY_QUERY_RESULT_STATUS_PROPERTIES_KHR:
             ((VkQueueFamilyQueryResultStatusPropertiesKHR *)pnext)
