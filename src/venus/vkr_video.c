@@ -75,6 +75,101 @@ vkr_video_count_decode(void)
    }
 }
 
+/* --- validation ----------------------------------------------------------
+ *
+ * The guest command stream is untrusted input to a host process holding an
+ * open GPU fd. Everything below runs BEFORE the corresponding host call, and
+ * every check fails closed.
+ *
+ * Note the direction of the risk compared with W2. A wrong REJECTION fails
+ * closed and shows up as a feature that does not work; a wrong VALIDATION
+ * fails open and shows up as nothing at all. That asymmetry is why each of
+ * these ships with a negative control rather than only a positive one.
+ */
+
+/* Resolve VK_WHOLE_SIZE and bounds-check without overflowing.
+ *
+ * The obvious `offset + range <= size` wraps in 64-bit arithmetic when range
+ * is VK_WHOLE_SIZE (~0ULL), and the check then PASSES for exactly the input it
+ * exists to reject. Comparing by subtraction on values already known to be in
+ * range cannot wrap.
+ */
+static bool
+vkr_video_range_within(VkDeviceSize offset, VkDeviceSize range, VkDeviceSize size)
+{
+   if (offset > size)
+      return false;
+   if (range == VK_WHOLE_SIZE)
+      return true; /* resolves to the remainder of the buffer by definition */
+   return range <= size - offset;
+}
+
+/* A reference slot index is either "not retained in the DPB" or a real slot.
+ *
+ * slotIndex == -1 legitimately means the picture is not retained, which is
+ * ordinary for non-reference pictures in High-profile B-frames. A membership
+ * check applied naively to that case rejects valid content.
+ */
+static bool
+vkr_video_slot_index_is_ignored(int32_t slot_index)
+{
+   return slot_index < 0;
+}
+
+static bool
+vkr_video_validate_reference_slot(const struct vkr_video_session *sess,
+                                  const VkVideoReferenceSlotInfoKHR *slot,
+                                  bool is_setup_slot)
+{
+   if (!slot)
+      return true; /* pSetupReferenceSlot may be NULL */
+
+   if (vkr_video_slot_index_is_ignored(slot->slotIndex)) {
+      /* The resource is IGNORED when the index is negative, so a conformant
+       * guest may leave it uninitialised. Reading it here -- to validate or to
+       * replace a handle -- would dereference whatever happened to be there
+       * and reject ordinary B-frame content.
+       */
+      return true;
+   }
+
+   if ((uint32_t)slot->slotIndex >= sess->max_dpb_slots)
+      return false;
+
+   /* A setup slot with a real index is a WRITE target, so it gets the same
+    * treatment as a reference slot. The spike exempted it entirely, which let
+    * decoded output land on an image the session never bound.
+    */
+   if (!slot->pPictureResource)
+      return !is_setup_slot;
+
+   return slot->pPictureResource->imageViewBinding != VK_NULL_HANDLE;
+}
+
+static bool
+vkr_video_validate_decode_info(const struct vkr_video_session *sess,
+                               const VkVideoDecodeInfoKHR *info)
+{
+   if (!info || !sess)
+      return false;
+
+   /* Count first: bounding the indices says nothing about how many there are,
+    * and the array is walked below.
+    */
+   if (info->referenceSlotCount > sess->max_dpb_slots)
+      return false;
+
+   if (!vkr_video_validate_reference_slot(sess, info->pSetupReferenceSlot, true))
+      return false;
+
+   for (uint32_t i = 0; i < info->referenceSlotCount; i++) {
+      if (!vkr_video_validate_reference_slot(sess, &info->pReferenceSlots[i], false))
+         return false;
+   }
+
+   return true;
+}
+
 static void
 vkr_dispatch_vkGetPhysicalDeviceVideoCapabilitiesKHR(
    UNUSED struct vn_dispatch_context *dispatch,
@@ -129,6 +224,17 @@ vkr_dispatch_vkCreateVideoSessionKHR(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   /* Bound live sessions BEFORE allocating or forwarding. Per-array caps bound
+    * one command; nothing else bounds how many sessions accumulate, and each
+    * one pins host memory once bound.
+    */
+   if (ctx->video_session_count >= VKR_VIDEO_MAX_SESSIONS_PER_CONTEXT) {
+      args->ret = VK_ERROR_TOO_MANY_OBJECTS;
+      if (args->pVideoSession)
+         *args->pVideoSession = VK_NULL_HANDLE;
+      return;
+   }
+
    struct vkr_video_session *sess = vkr_context_alloc_object(
       ctx, sizeof(*sess), VK_OBJECT_TYPE_VIDEO_SESSION_KHR, args->pVideoSession);
    if (!sess) {
@@ -136,7 +242,15 @@ vkr_dispatch_vkCreateVideoSessionKHR(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   list_inithead(&sess->parameters);
+   /* Capture the DPB limits the guest asked for, so the decode path can range
+    * check slots without re-querying the host per command. The host validates
+    * these against its own capabilities on the create below, so a value it
+    * accepts is one it will honour.
+    */
+   if (args->pCreateInfo) {
+      sess->max_dpb_slots = args->pCreateInfo->maxDpbSlots;
+      sess->max_active_references = args->pCreateInfo->maxActiveReferencePictures;
+   }
 
    vn_replace_vkCreateVideoSessionKHR_args_handle(args);
    args->ret = vk->CreateVideoSessionKHR(args->device, args->pCreateInfo, NULL,
@@ -147,6 +261,7 @@ vkr_dispatch_vkCreateVideoSessionKHR(struct vn_dispatch_context *dispatch,
    }
 
    vkr_device_add_object(ctx, dev, &sess->base);
+   ctx->video_session_count++;
 
    vkr_video_session_creates++;
    vkr_log("VIDEO-EVIDENCE session created (total=%" PRIu64 ")",
@@ -165,17 +280,20 @@ vkr_dispatch_vkDestroyVideoSessionKHR(struct vn_dispatch_context *dispatch,
    if (!sess)
       return;
 
-   /* Destroying a session implicitly destroys its parameters objects host
-    * side. Reap the renderer's records first, or the object table keeps
-    * entries naming handles the driver has already freed -- and a later guest
-    * reference to one of them would be forwarded as a live handle.
+   /* NO cascade to parameters objects.
+    *
+    * The spike reaped them here on the vkr_descriptor_pool precedent. That was
+    * wrong: sessions and parameters are siblings owned by the device, and the
+    * reap freed the renderer's record WITHOUT calling
+    * vkDestroyVideoSessionParametersKHR, so the host object leaked and a
+    * conformant guest destroying its parameters afterwards found nothing.
     */
-   vkr_context_remove_objects(ctx, &sess->parameters);
-
    vn_replace_vkDestroyVideoSessionKHR_args_handle(args);
    vk->DestroyVideoSessionKHR(args->device, args->videoSession, NULL);
 
    vkr_device_remove_object(ctx, dev, &sess->base);
+   if (ctx->video_session_count)
+      ctx->video_session_count--;
 }
 
 static void
@@ -210,10 +328,19 @@ vkr_dispatch_vkBindVideoSessionMemoryKHR(
       return;
    }
 
+   struct vkr_video_session *sess =
+      vkr_video_session_from_handle(args->videoSession);
+
    vn_replace_vkBindVideoSessionMemoryKHR_args_handle(args);
    args->ret = vk->BindVideoSessionMemoryKHR(args->device, args->videoSession,
                                              args->bindSessionMemoryInfoCount,
                                              args->pBindSessionMemoryInfos);
+
+   /* Record what was bound so liveness is checkable at destroy. Counted only
+    * on success: a failed bind changes nothing host side.
+    */
+   if (args->ret == VK_SUCCESS && sess)
+      sess->bound_memory_count += args->bindSessionMemoryInfoCount;
 }
 
 static void
@@ -231,14 +358,6 @@ vkr_dispatch_vkCreateVideoSessionParametersKHR(
          *args->pVideoSessionParameters = VK_NULL_HANDLE;
       return;
    }
-
-   /* Resolve the owning session BEFORE handle replacement rewrites the create
-    * info in place -- afterwards the field holds a host handle, which is not a
-    * key into the renderer's object table.
-    */
-   struct vkr_video_session *sess = NULL;
-   if (args->pCreateInfo && args->pCreateInfo->videoSession != VK_NULL_HANDLE)
-      sess = vkr_video_session_from_handle(args->pCreateInfo->videoSession);
 
    struct vkr_video_session_parameters *params =
       vkr_context_alloc_object(ctx, sizeof(*params),
@@ -259,15 +378,6 @@ vkr_dispatch_vkCreateVideoSessionParametersKHR(
    }
 
    vkr_device_add_object(ctx, dev, &params->base);
-
-   /* Re-home onto the session so destroying the session reaps this too.
-    * vkr_device_add_object put it on the device's tracking list; moving it
-    * keeps exactly one owner, so the cascade cannot double-free.
-    */
-   if (sess) {
-      list_del(&params->base.track_head);
-      list_add(&params->base.track_head, &sess->parameters);
-   }
 }
 
 static void
@@ -278,14 +388,36 @@ vkr_dispatch_vkUpdateVideoSessionParametersKHR(
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
-   if (!vk->UpdateVideoSessionParametersKHR) {
+   struct vkr_video_session_parameters *params =
+      vkr_video_session_parameters_from_handle(args->videoSessionParameters);
+
+   if (!vk->UpdateVideoSessionParametersKHR || !params) {
       args->ret = VK_ERROR_EXTENSION_NOT_PRESENT;
       return;
    }
 
+   /* The guest value must be strictly GREATER than the stored one.
+    *
+    * Not "exactly one more": that would reject a conformant client whose
+    * counter advances by more than one. Checking before forwarding keeps the
+    * renderer and the host from disagreeing about which parameter sets exist.
+    */
+   if (!args->pUpdateInfo ||
+       args->pUpdateInfo->updateSequenceCount <= params->update_sequence_count) {
+      args->ret = VK_ERROR_VALIDATION_FAILED_EXT;
+      return;
+   }
+   const uint32_t next = args->pUpdateInfo->updateSequenceCount;
+
    vn_replace_vkUpdateVideoSessionParametersKHR_args_handle(args);
    args->ret = vk->UpdateVideoSessionParametersKHR(
       args->device, args->videoSessionParameters, args->pUpdateInfo);
+
+   /* Advance only on host success, so a rejected update leaves the two sides
+    * agreeing rather than skipping a value the host never saw.
+    */
+   if (args->ret == VK_SUCCESS)
+      params->update_sequence_count = next;
 }
 
 static void
@@ -318,25 +450,55 @@ vkr_dispatch_vkDestroyVideoSessionParametersKHR(
  */
 
 static void
-vkr_dispatch_vkCmdBeginVideoCodingKHR(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdBeginVideoCodingKHR(struct vn_dispatch_context *dispatch,
                                       struct vn_command_vkCmdBeginVideoCodingKHR *args)
 {
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    if (!cmd || !cmd->device->proc_table.CmdBeginVideoCodingKHR)
       return;
 
+   /* Nested Begin is rejected. The scope is a boolean rather than a depth
+    * counter because the spec has no nesting to model -- treating a second
+    * Begin as "depth 2" would invent semantics the driver does not implement.
+    */
+   if (cmd->in_video_coding_scope) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
+   /* Capture the session BEFORE handle replacement.
+    *
+    * Replacement rewrites pBeginInfo in place, and afterwards the field holds
+    * a HOST handle -- which is not a key into the renderer's object table. The
+    * same ordering trap cost a bug in the spike's parameters-create path.
+    */
+   struct vkr_video_session *sess = NULL;
+   if (args->pBeginInfo && args->pBeginInfo->videoSession != VK_NULL_HANDLE)
+      sess = vkr_video_session_from_handle(args->pBeginInfo->videoSession);
+   if (!sess) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    vn_replace_vkCmdBeginVideoCodingKHR_args_handle(args);
    cmd->device->proc_table.CmdBeginVideoCodingKHR(args->commandBuffer, args->pBeginInfo);
+   cmd->in_video_coding_scope = true;
+   cmd->video_coding_session_id = sess->base.id;
 }
 
 static void
 vkr_dispatch_vkCmdControlVideoCodingKHR(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdControlVideoCodingKHR *args)
 {
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    if (!cmd || !cmd->device->proc_table.CmdControlVideoCodingKHR)
       return;
+
+   if (!cmd->in_video_coding_scope) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
 
    vn_replace_vkCmdControlVideoCodingKHR_args_handle(args);
    cmd->device->proc_table.CmdControlVideoCodingKHR(args->commandBuffer,
@@ -344,12 +506,37 @@ vkr_dispatch_vkCmdControlVideoCodingKHR(
 }
 
 static void
-vkr_dispatch_vkCmdDecodeVideoKHR(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdDecodeVideoKHR(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCmdDecodeVideoKHR *args)
 {
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    if (!cmd || !cmd->device->proc_table.CmdDecodeVideoKHR)
       return;
+
+   /* Outside a coding scope this is UNDEFINED per spec, not an error return,
+    * so the driver is entitled to do anything at all with it.
+    */
+   if (!cmd->in_video_coding_scope) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
+   /* Resolve the session the scope was opened with, by id.
+    *
+    * Looking it up rather than holding a pointer is what makes a destroyed
+    * session a clean rejection instead of a read of freed memory.
+    */
+   struct vkr_video_session *sess =
+      vkr_context_get_object(dispatch->data, cmd->video_coding_session_id);
+   if (!sess || sess->base.type != VK_OBJECT_TYPE_VIDEO_SESSION_KHR) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
+   if (!vkr_video_validate_decode_info(sess, args->pDecodeInfo)) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
 
    vkr_video_count_decode();
 
@@ -358,16 +545,23 @@ vkr_dispatch_vkCmdDecodeVideoKHR(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkCmdEndVideoCodingKHR(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkCmdEndVideoCodingKHR(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdEndVideoCodingKHR *args)
 {
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    if (!cmd || !cmd->device->proc_table.CmdEndVideoCodingKHR)
       return;
 
+   if (!cmd->in_video_coding_scope) {
+      vkr_context_set_fatal(dispatch->data);
+      return;
+   }
+
    vn_replace_vkCmdEndVideoCodingKHR_args_handle(args);
    cmd->device->proc_table.CmdEndVideoCodingKHR(args->commandBuffer,
                                                 args->pEndCodingInfo);
+   cmd->in_video_coding_scope = false;
+   cmd->video_coding_session_id = 0;
 }
 
 void

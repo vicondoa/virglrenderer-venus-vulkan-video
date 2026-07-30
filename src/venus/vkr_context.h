@@ -45,6 +45,12 @@ enum vkr_context_validate_level {
 
 struct vkr_context {
    uint32_t ctx_id;
+
+   /* Live video sessions, bounded per context. Per-array caps bound one
+    * command and say nothing about how many objects accumulate, and a guest
+    * can loop vkCreateVideoSessionKHR.
+    */
+   uint32_t video_session_count;
    vkr_renderer_retire_fence_callback_type retire_fence;
 
    char *debug_name;

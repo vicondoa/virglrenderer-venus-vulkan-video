@@ -4,6 +4,7 @@
  */
 
 #include "vkr_command_buffer.h"
+#include "vkr_video.h"
 
 #include "vkr_command_buffer_gen.h"
 #include "vkr_video_reject.h"
@@ -144,6 +145,13 @@ vkr_dispatch_vkResetCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    struct vn_device_proc_table *vk = &cmd->device->proc_table;
 
+   /* Reset discards the recording, so any video coding scope it had open goes
+    * with it. Leaving the flag set would make the NEXT recording start inside
+    * a scope it never opened, and a decode recorded there would be accepted.
+    */
+   cmd->in_video_coding_scope = false;
+   cmd->video_coding_session_id = 0;
+
    vn_replace_vkResetCommandBuffer_args_handle(args);
    args->ret = vk->ResetCommandBuffer(args->commandBuffer, args->flags);
 }
@@ -156,17 +164,38 @@ vkr_dispatch_vkBeginCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    struct vn_device_proc_table *vk = &cmd->device->proc_table;
 
+   /* Re-Begin implicitly resets the recording, so the same reasoning as
+    * vkResetCommandBuffer applies: a stale scope would carry into a recording
+    * that never opened one.
+    */
+   cmd->in_video_coding_scope = false;
+   cmd->video_coding_session_id = 0;
+
    vn_replace_vkBeginCommandBuffer_args_handle(args);
    args->ret = vk->BeginCommandBuffer(args->commandBuffer, args->pBeginInfo);
 }
 
 static void
-vkr_dispatch_vkEndCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkEndCommandBuffer(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkEndCommandBuffer *args)
 {
    TRACE_FUNC();
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    struct vn_device_proc_table *vk = &cmd->device->proc_table;
+
+   /* A coding scope must be closed before the recording is finalised.
+    *
+    * Tracking entry and exit without checking termination leaves the tracking
+    * decorative: a guest can record Begin with no matching End and submit a
+    * buffer that leaves the host driver inside an unterminated scope. This is
+    * the one point at which the recording becomes final, so it is the only
+    * place the check can be made.
+    */
+   if (cmd->in_video_coding_scope) {
+      vkr_context_set_fatal(dispatch->data);
+      args->ret = VK_ERROR_VALIDATION_FAILED_EXT;
+      return;
+   }
 
    vn_replace_vkEndCommandBuffer_args_handle(args);
    args->ret = vk->EndCommandBuffer(args->commandBuffer);
