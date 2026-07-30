@@ -37,30 +37,26 @@
  * Remove this when video is genuinely supported end to end.
  */
 
-/* Queue capability, split by direction.
+/* Queue capability.
  *
- * The generated VKR_VIDEO_QUEUE_BITS mask covers decode AND encode, which was
- * right while the renderer implemented neither. It now implements H.264
- * decode, and leaving the decode bit scrubbed is not a safe default -- it is
- * an incoherent one. The extension is advertised on the device while the
- * queue that would carry it reports no video capability, so FFmpeg finds a
- * video-capable device with no video-capable queue and falls back to software.
+ * The generated VKR_VIDEO_QUEUE_BITS is already exactly the UNSUPPORTED video
+ * queue bits: the generator derives its masks by intersecting vk.xml against
+ * SUPPORTED_VIDEO_EXTENSIONS, so a decode bit is not in it. Scrubbing the
+ * whole mask therefore removes encode and preserves decode with no extra
+ * logic here.
  *
- * So: strip ENCODE, pass DECODE. Stated as an explicit supported set rather
- * than "everything except encode", so a future codec bit is denied by default
- * and has to be named here to reach a guest.
+ * An earlier version of this file carried a hand-written
+ * VKR_VIDEO_SUPPORTED_QUEUE_BITS and subtracted it. That was dead code --
+ * subtracting the decode bit from a mask that no longer contained it -- and
+ * worse, it was a SECOND hand-written set deciding the same question the
+ * generator already answers. It was found by a mutation that should have
+ * fired and did not: forcing the supported set to zero changed nothing,
+ * because the subtraction had no effect either way.
  */
-#define VKR_VIDEO_SUPPORTED_QUEUE_BITS ((VkQueueFlags)VK_QUEUE_VIDEO_DECODE_BIT_KHR)
-
-#define VKR_VIDEO_SUPPORTED_CODEC_OPS                                                    \
-   ((VkVideoCodecOperationFlagsKHR)VK_VIDEO_CODEC_OPERATION_DECODE_H264_BIT_KHR)
-
 static inline void
 vkr_video_scrub_queue_family_properties(VkQueueFamilyProperties *props)
 {
-   const VkQueueFlags unsupported =
-      (VkQueueFlags)VKR_VIDEO_QUEUE_BITS & ~VKR_VIDEO_SUPPORTED_QUEUE_BITS;
-   props->queueFlags &= ~unsupported;
+   props->queueFlags &= ~(VkQueueFlags)VKR_VIDEO_QUEUE_BITS;
 }
 
 static inline void
@@ -91,8 +87,14 @@ vkr_video_scrub_queue_family_properties2_array(VkQueueFamilyProperties2 *props,
              * no codec named, which FFmpeg reads as "a video queue that
              * decodes nothing" -- a video-capable device it cannot use.
              */
+            /* Hand-written, unlike the masks above, because the generator
+             * emits no per-codec-operation set today. That makes it the one
+             * remaining hand-written video set in this file, which is worth
+             * knowing: it is the thing to derive next.
+             */
             ((VkQueueFamilyVideoPropertiesKHR *)pnext)->videoCodecOperations &=
-               VKR_VIDEO_SUPPORTED_CODEC_OPS;
+               (VkVideoCodecOperationFlagsKHR)
+                  VK_VIDEO_CODEC_OPERATION_DECODE_H264_BIT_KHR;
             break;
          case VK_STRUCTURE_TYPE_QUEUE_FAMILY_QUERY_RESULT_STATUS_PROPERTIES_KHR:
             ((VkQueueFamilyQueryResultStatusPropertiesKHR *)pnext)
