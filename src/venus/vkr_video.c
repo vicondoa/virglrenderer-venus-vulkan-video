@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <inttypes.h>
+
 #include "vkr_video.h"
 
 #include "venus-protocol/vn_protocol_renderer_command_buffer.h"
@@ -41,6 +43,37 @@
  * reference slot membership, DPB slot ranges, coding scope, and parameters
  * update sequencing are all forwarded to the host driver unexamined.
  */
+
+
+/* --- decode activity counters -------------------------------------------
+ *
+ * The plan's evidence contract requires command-level proof that decode
+ * actually executed, correlated to the process that asked for it -- because
+ * every layer above this one fails silently. FFmpeg falls back to software and
+ * exits 0; Firefox falls back to software and plays an identical picture. A
+ * frame count from either is evidence that SOMETHING decoded, not that it
+ * decoded here.
+ *
+ * These counters are the renderer's own statement of what it executed. They
+ * are the only place in the stack that cannot be satisfied by a fallback.
+ */
+static uint64_t vkr_video_session_creates;
+static uint64_t vkr_video_decode_cmds;
+
+static void
+vkr_video_count_decode(void)
+{
+   vkr_video_decode_cmds++;
+   /* Log on a curve rather than every call: the first few make an experiment
+    * observable immediately, and the powers of two keep a long playback from
+    * flooding the log while still showing it is progressing.
+    */
+   if (vkr_video_decode_cmds <= 3 ||
+       (vkr_video_decode_cmds & (vkr_video_decode_cmds - 1)) == 0) {
+      vkr_log("VIDEO-EVIDENCE decode_cmds=%" PRIu64 " sessions=%" PRIu64,
+              vkr_video_decode_cmds, vkr_video_session_creates);
+   }
+}
 
 static void
 vkr_dispatch_vkGetPhysicalDeviceVideoCapabilitiesKHR(
@@ -114,6 +147,10 @@ vkr_dispatch_vkCreateVideoSessionKHR(struct vn_dispatch_context *dispatch,
    }
 
    vkr_device_add_object(ctx, dev, &sess->base);
+
+   vkr_video_session_creates++;
+   vkr_log("VIDEO-EVIDENCE session created (total=%" PRIu64 ")",
+           vkr_video_session_creates);
 }
 
 static void
@@ -313,6 +350,8 @@ vkr_dispatch_vkCmdDecodeVideoKHR(UNUSED struct vn_dispatch_context *dispatch,
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    if (!cmd || !cmd->device->proc_table.CmdDecodeVideoKHR)
       return;
+
+   vkr_video_count_decode();
 
    vn_replace_vkCmdDecodeVideoKHR_args_handle(args);
    cmd->device->proc_table.CmdDecodeVideoKHR(args->commandBuffer, args->pDecodeInfo);
