@@ -109,10 +109,41 @@ vkr_dispatch_vkGetPhysicalDeviceVideoFormatPropertiesKHR(
       return;
    }
 
+   /* Reject a usage combination the renderer does not support before it
+    * reaches the host driver.
+    */
+   if (!args->pVideoFormatInfo ||
+       !vkr_video_decode_usage_is_allowed(args->pVideoFormatInfo->imageUsage)) {
+      args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
+      if (args->pVideoFormatPropertyCount)
+         *args->pVideoFormatPropertyCount = 0;
+      return;
+   }
+
    vn_replace_vkGetPhysicalDeviceVideoFormatPropertiesKHR_args_handle(args);
    args->ret = vk->GetPhysicalDeviceVideoFormatPropertiesKHR(
       args->physicalDevice, args->pVideoFormatInfo, args->pVideoFormatPropertyCount,
       args->pVideoFormatProperties);
+
+   /* Filter the reply to the pinned allowlist, compacting in place.
+    *
+    * Reporting a format the renderer has never carried would have the guest
+    * allocate decode images in it, and the first thing to notice would be the
+    * host driver. The count is rewritten to match, so a guest sizing its array
+    * from a first call and filling on a second sees a consistent answer.
+    */
+   if (args->ret == VK_SUCCESS && args->pVideoFormatProperties &&
+       args->pVideoFormatPropertyCount) {
+      uint32_t kept = 0;
+      for (uint32_t i = 0; i < *args->pVideoFormatPropertyCount; i++) {
+         if (!vkr_video_format_is_allowed(args->pVideoFormatProperties[i].format))
+            continue;
+         if (kept != i)
+            args->pVideoFormatProperties[kept] = args->pVideoFormatProperties[i];
+         kept++;
+      }
+      *args->pVideoFormatPropertyCount = kept;
+   }
 }
 
 static void

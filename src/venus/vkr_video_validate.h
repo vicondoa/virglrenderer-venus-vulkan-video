@@ -107,4 +107,46 @@ vkr_video_validate_decode_info(const struct vkr_video_session *sess,
    return true;
 }
 
+/* --- format allowlist ----------------------------------------------------
+ *
+ * A pinned allowlist rather than "whatever the host reports".
+ *
+ * VK_FORMAT_G8_B8R8_2PLANE_420_UNORM is the mandatory H.264 decode format and
+ * is what FFmpeg actually selected (measured: "Chosen frame pixfmt: nv12").
+ * Widening this later is additive and safe; starting wide is not, because the
+ * renderer would be forwarding decode images in formats nothing here has
+ * exercised.
+ */
+static inline bool
+vkr_video_format_is_allowed(VkFormat format)
+{
+   switch (format) {
+   case VK_FORMAT_G8_B8R8_2PLANE_420_UNORM:
+      return true;
+   default:
+      return false;
+   }
+}
+
+/* Image usage a decode query may ask about.
+ *
+ * Checked on the QUERY as well as on creation. Filtering only what the query
+ * reports is advice, not enforcement -- a guest is free not to read it -- but
+ * an unfiltered query still lets a guest probe the host driver with arbitrary
+ * usage combinations on a video profile, which is host-driver input this
+ * renderer never validated.
+ */
+static inline bool
+vkr_video_decode_usage_is_allowed(VkImageUsageFlags usage)
+{
+   const VkImageUsageFlags allowed =
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+      (VkImageUsageFlags)VK_IMAGE_USAGE_SAMPLED_BIT;
+   return usage != 0 && (usage & ~allowed) == 0;
+}
+
 #endif /* VKR_VIDEO_VALIDATE_H */
