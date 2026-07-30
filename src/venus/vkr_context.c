@@ -34,6 +34,7 @@
 #include "vkr_render_pass.h"
 #include "vkr_ring.h"
 #include "vkr_transport.h"
+#include "vkr_video.h"
 
 void
 vkr_context_add_instance(struct vkr_context *ctx,
@@ -125,6 +126,8 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    vkr_context_init_host_copy_dispatch(ctx);
 
    vkr_context_init_acceleration_structure_dispatch(ctx);
+
+   vkr_context_init_video_dispatch(ctx);
 }
 
 static inline void

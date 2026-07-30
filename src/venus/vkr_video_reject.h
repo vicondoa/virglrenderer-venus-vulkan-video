@@ -16,8 +16,6 @@ static inline bool
 vkr_video_value_VkAccessFlags2(VkAccessFlags2 value)
 {
    const VkAccessFlags2 video =
-      (VkAccessFlags2)VK_ACCESS_2_VIDEO_DECODE_READ_BIT_KHR |
-      (VkAccessFlags2)VK_ACCESS_2_VIDEO_DECODE_WRITE_BIT_KHR |
       (VkAccessFlags2)VK_ACCESS_2_VIDEO_ENCODE_READ_BIT_KHR |
       (VkAccessFlags2)VK_ACCESS_2_VIDEO_ENCODE_WRITE_BIT_KHR;
    return (value & video) != 0;
@@ -35,8 +33,6 @@ static inline bool
 vkr_video_value_VkBufferUsageFlags(VkBufferUsageFlags value)
 {
    const VkBufferUsageFlags video =
-      (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_DECODE_DST_BIT_KHR |
-      (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_DECODE_SRC_BIT_KHR |
       (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_ENCODE_DST_BIT_KHR |
       (VkBufferUsageFlags)VK_BUFFER_USAGE_VIDEO_ENCODE_SRC_BIT_KHR;
    return (value & video) != 0;
@@ -46,8 +42,6 @@ static inline bool
 vkr_video_value_VkBufferUsageFlags2(VkBufferUsageFlags2 value)
 {
    const VkBufferUsageFlags2 video =
-      (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_DECODE_DST_BIT_KHR |
-      (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_DECODE_SRC_BIT_KHR |
       (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_ENCODE_DST_BIT_KHR |
       (VkBufferUsageFlags2)VK_BUFFER_USAGE_2_VIDEO_ENCODE_SRC_BIT_KHR;
    return (value & video) != 0;
@@ -65,9 +59,6 @@ static inline bool
 vkr_video_value_VkImageLayout(VkImageLayout value)
 {
    switch (value) {
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_QUANTIZATION_MAP_KHR:
@@ -82,9 +73,6 @@ static inline bool
 vkr_video_value_VkImageUsageFlags(VkImageUsageFlags value)
 {
    const VkImageUsageFlags video =
-      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR |
-      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR |
-      (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR |
       (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_DPB_BIT_KHR |
       (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_DST_BIT_KHR |
       (VkImageUsageFlags)VK_IMAGE_USAGE_VIDEO_ENCODE_EMPHASIS_MAP_BIT_KHR |
@@ -96,20 +84,15 @@ vkr_video_value_VkImageUsageFlags(VkImageUsageFlags value)
 static inline bool
 vkr_video_value_VkObjectType(VkObjectType value)
 {
-   switch (value) {
-   case VK_OBJECT_TYPE_VIDEO_SESSION_KHR:
-   case VK_OBJECT_TYPE_VIDEO_SESSION_PARAMETERS_KHR:
-      return true;
-   default:
-      return false;
-   }
+   /* No unsupported video value of this type exists today. */
+   (void)value;
+   return false;
 }
 
 static inline bool
 vkr_video_value_VkPipelineStageFlags2(VkPipelineStageFlags2 value)
 {
    const VkPipelineStageFlags2 video =
-      (VkPipelineStageFlags2)VK_PIPELINE_STAGE_2_VIDEO_DECODE_BIT_KHR |
       (VkPipelineStageFlags2)VK_PIPELINE_STAGE_2_VIDEO_ENCODE_BIT_KHR;
    return (value & video) != 0;
 }
@@ -117,16 +100,15 @@ vkr_video_value_VkPipelineStageFlags2(VkPipelineStageFlags2 value)
 static inline bool
 vkr_video_value_VkQueryResultFlags(VkQueryResultFlags value)
 {
-   const VkQueryResultFlags video =
-      (VkQueryResultFlags)VK_QUERY_RESULT_WITH_STATUS_BIT_KHR;
-   return (value & video) != 0;
+   /* No unsupported video value of this type exists today. */
+   (void)value;
+   return false;
 }
 
 static inline bool
 vkr_video_value_VkQueryType(VkQueryType value)
 {
    switch (value) {
-   case VK_QUERY_TYPE_RESULT_STATUS_ONLY_KHR:
    case VK_QUERY_TYPE_VIDEO_ENCODE_FEEDBACK_KHR:
       return true;
    default:
@@ -508,34 +490,6 @@ vkr_video_reject_VkSemaphoreSubmitInfo(const VkSemaphoreSubmitInfo *s)
    return false;
 }
 
-static inline bool
-vkr_video_reject_present_VkVideoDecodeH264ProfileInfoKHR(const VkVideoDecodeH264ProfileInfoKHR *s)
-{
-   /* Presence is the violation; no member is legitimate here. */
-   return s != NULL;
-}
-
-static inline bool
-vkr_video_reject_present_VkVideoDecodeUsageInfoKHR(const VkVideoDecodeUsageInfoKHR *s)
-{
-   /* Presence is the violation; no member is legitimate here. */
-   return s != NULL;
-}
-
-static inline bool
-vkr_video_reject_present_VkVideoProfileInfoKHR(const VkVideoProfileInfoKHR *s)
-{
-   /* Presence is the violation; no member is legitimate here. */
-   return s != NULL;
-}
-
-static inline bool
-vkr_video_reject_present_VkVideoProfileListInfoKHR(const VkVideoProfileListInfoKHR *s)
-{
-   /* Presence is the violation; no member is legitimate here. */
-   return s != NULL;
-}
-
 /* Walk a pNext chain and reject any chained struct that carries a
  * video value. A chained struct is never reached by validating the
  * struct it hangs off: the guest attaches it to an ordinary create
@@ -566,18 +520,6 @@ vkr_video_reject_pnext(const void *pnext)
             return true;
          break;
       }
-      /* VkVideoDecodeH264ProfileInfoKHR: presence alone is the violation. */
-      case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_INFO_KHR:
-         return vkr_video_reject_present_VkVideoDecodeH264ProfileInfoKHR((const VkVideoDecodeH264ProfileInfoKHR *)s);
-      /* VkVideoDecodeUsageInfoKHR: presence alone is the violation. */
-      case VK_STRUCTURE_TYPE_VIDEO_DECODE_USAGE_INFO_KHR:
-         return vkr_video_reject_present_VkVideoDecodeUsageInfoKHR((const VkVideoDecodeUsageInfoKHR *)s);
-      /* VkVideoProfileInfoKHR: presence alone is the violation. */
-      case VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR:
-         return vkr_video_reject_present_VkVideoProfileInfoKHR((const VkVideoProfileInfoKHR *)s);
-      /* VkVideoProfileListInfoKHR: presence alone is the violation. */
-      case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
-         return vkr_video_reject_present_VkVideoProfileListInfoKHR((const VkVideoProfileListInfoKHR *)s);
       case VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT:
          if (vkr_video_reject_VkAttachmentDescriptionStencilLayout((const VkAttachmentDescriptionStencilLayout *)s))
             return true;
@@ -624,31 +566,23 @@ vkr_video_reject_pnext(const void *pnext)
 
 /* Outbound scrub masks, derived from the video extensions in vk.xml. */
 #define VKR_VIDEO_FORMAT_FEATURE_BITS \
-   (VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR | \
-    VK_FORMAT_FEATURE_VIDEO_DECODE_OUTPUT_BIT_KHR | \
-    VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR | \
+   (VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR | \
     VK_FORMAT_FEATURE_VIDEO_ENCODE_INPUT_BIT_KHR)
 
 #define VKR_VIDEO_FORMAT_FEATURE_BITS2 \
-   (VK_FORMAT_FEATURE_2_VIDEO_DECODE_DPB_BIT_KHR | \
-    VK_FORMAT_FEATURE_2_VIDEO_DECODE_OUTPUT_BIT_KHR | \
-    VK_FORMAT_FEATURE_2_VIDEO_ENCODE_DPB_BIT_KHR | \
+   (VK_FORMAT_FEATURE_2_VIDEO_ENCODE_DPB_BIT_KHR | \
     VK_FORMAT_FEATURE_2_VIDEO_ENCODE_EMPHASIS_MAP_BIT_KHR | \
     VK_FORMAT_FEATURE_2_VIDEO_ENCODE_INPUT_BIT_KHR | \
     VK_FORMAT_FEATURE_2_VIDEO_ENCODE_QUANTIZATION_DELTA_MAP_BIT_KHR)
 
 #define VKR_VIDEO_QUEUE_BITS \
-   (VK_QUEUE_VIDEO_DECODE_BIT_KHR | \
-    VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+   (VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 
 /* Every video image layout, for outbound layout-list compaction. */
 static inline bool
 vkr_video_is_video_layout(VkImageLayout layout)
 {
    switch (layout) {
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR:
-   case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR:
    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_QUANTIZATION_MAP_KHR:

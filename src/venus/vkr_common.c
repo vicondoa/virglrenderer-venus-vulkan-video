@@ -136,6 +136,16 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .KHR_shader_relaxed_extended_instruction = true,
    .KHR_shader_subgroup_uniform_control_flow = true,
    .KHR_shader_untyped_pointers = true,
+   /* Vulkan Video -- DECODE ONLY, H.264 only.
+    *
+    * Encode is deliberately absent and stays rejected and scrubbed. Enabling
+    * an entry here is a promise that the renderer can execute the WHOLE
+    * extension, so it must not be set for anything whose commands are not
+    * implemented and wired in vkr_video.c.
+    */
+   .KHR_video_queue = true,
+   .KHR_video_decode_queue = true,
+   .KHR_video_decode_h264 = true,
    .KHR_workgroup_memory_explicit_layout = true,
    /* EXT extensions */
    .EXT_attachment_feedback_loop_dynamic_state = true,

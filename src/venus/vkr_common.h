@@ -158,6 +158,9 @@ struct vkr_object {
       VkDescriptorUpdateTemplate descriptor_update_template;
 
       VkAccelerationStructureKHR acceleration_structure;
+
+      VkVideoSessionKHR video_session;
+      VkVideoSessionParametersKHR video_session_parameters;
    } handle;
 
    struct list_head track_head;
@@ -278,6 +281,9 @@ vkr_is_recognized_object_type(VkObjectType type)
    case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE:
    /* VK_KHR_acceleration_structure */
    case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR:
+   /* VK_KHR_video_queue */
+   case VK_OBJECT_TYPE_VIDEO_SESSION_KHR:
+   case VK_OBJECT_TYPE_VIDEO_SESSION_PARAMETERS_KHR:
       return true;
    default:
       vkr_log("unrecognized object type %u", type);

@@ -40,30 +40,47 @@ vkr_get_capset(void *capset, uint32_t flags)
       uint32_t ext_mask[VN_INFO_EXTENSION_MAX_NUMBER / 32 + 1] = { 0 };
       vn_info_extension_mask_init(ext_mask);
 
-      /* Clear the video extension bits.
+      /* Clear the capset bit for every video extension the renderer cannot
+       * execute end to end.
        *
        * vn_info_extension_mask_init() sets a bit for every entry in
        * _vn_info_extensions with no filter for whether this renderer actually
-       * supports the extension. The video extensions are in that table because
-       * the protocol can serialize them, but nothing here can execute them:
-       * their dispatch entries are NULL and vkr_extension_table does not
-       * enable them.
+       * supports the extension -- they are in that table because the protocol
+       * can serialize them, which is a strictly weaker statement than being
+       * able to execute them.
        *
        * The capset is a separate advertisement channel from
        * vkGetPhysicalDeviceExtensionProperties, and the guest reads it before
-       * issuing any command, so leaving these set tells the guest Venus speaks
-       * video while every other surface says it does not.
+       * issuing any command, so a bit set here is read as a promise that the
+       * renderer can execute the WHOLE extension.
        *
-       * Remove this when video is genuinely supported end to end.
+       * This is DERIVED, not enumerated: every video extension the protocol
+       * table knows about is cleared unless it appears in the supported set
+       * below. A hardcoded list of unsupported numbers would be inert today
+       * -- no encode extension is in the protocol table yet -- and would
+       * silently start advertising encode the moment one was added. Deriving
+       * makes the default deny, so a newly serializable extension has to be
+       * named here before it can ever reach a guest.
        */
-      static const uint32_t vkr_unsupported_ext_numbers[] = {
-         24, /* VK_KHR_video_queue */
-         25, /* VK_KHR_video_decode_queue */
-         41, /* VK_KHR_video_decode_h264 */
+      static const char *const vkr_supported_video_exts[] = {
+         "VK_KHR_video_queue",
+         "VK_KHR_video_decode_queue",
+         "VK_KHR_video_decode_h264",
       };
-      for (uint32_t i = 0; i < ARRAY_SIZE(vkr_unsupported_ext_numbers); i++) {
-         const uint32_t n = vkr_unsupported_ext_numbers[i];
-         ext_mask[n / 32] &= ~(1u << (n % 32));
+      for (int32_t i = 0; i < (int32_t)_vn_info_extension_count; i++) {
+         const struct vn_info_extension *ext = vn_info_extension_get(i);
+         if (strncmp(ext->name, "VK_KHR_video", 12))
+            continue;
+
+         bool supported = false;
+         for (uint32_t j = 0; j < ARRAY_SIZE(vkr_supported_video_exts); j++) {
+            if (!strcmp(ext->name, vkr_supported_video_exts[j])) {
+               supported = true;
+               break;
+            }
+         }
+         if (!supported)
+            ext_mask[ext->number / 32] &= ~(1u << (ext->number % 32));
       }
 
       static_assert(sizeof(ext_mask) <= sizeof(c->vk_extension_mask1),
