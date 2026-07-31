@@ -586,18 +586,27 @@ int virgl_video_init(int drm_fd,
          * initialises, the NVDEC driver loads, and it is turned away on its
          * vendor string alone.
          *
-         * The one host API this file needs from a VA driver is
+         * The one host API this file needs to hand a frame back is
          * vaExportSurfaceHandle() with VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2,
-         * which is standard rather than Mesa-specific, and which
-         * nvidia-vaapi-driver implements - it is how that driver hands frames
-         * to EGL consumers already. So the restriction looks conservative on
-         * this path rather than load bearing.
+         * which is standard rather than Mesa-specific and which
+         * nvidia-vaapi-driver implements. That made the restriction look
+         * conservative rather than load bearing.
          *
-         * "Looks" is not "is", so this is a separate opt-in from
-         * VIRGL_FORCE_VIDEO rather than folded into it. Enabling video and
-         * accepting a non-Mesa driver are two different decisions, and keeping
-         * them separable is what makes a later failure attributable to one of
-         * them. Default behaviour is unchanged: without the variable this
+         * It is load bearing. Measured with the override on: the guest sends
+         * decode commands, vaCreateBuffer and vaRenderPicture all succeed, and
+         * then vaEndPicture returns 0x17 (VA_STATUS_ERROR_DECODING_ERROR) for
+         * every single frame - 2790 of them in one run, no other error code.
+         * The host decode engine never engages, and the guest sees no error
+         * because the failure is entirely host side. Export was never the
+         * hard part; consuming virglrenderer's picture parameters and slice
+         * data is, and this driver will not.
+         *
+         * So the override is an investigation tool, not a capability. It is
+         * kept because the failure is now precisely located and worth being
+         * able to reproduce, and it is kept separate from VIRGL_FORCE_VIDEO
+         * because that separation is exactly what made this attributable:
+         * video initialised fine, and the driver was the thing that did not.
+         * Default behaviour is unchanged: without the variable this
          * still refuses exactly as upstream does.
          */
         const char *allow_any = getenv("VIRGL_VIDEO_ALLOW_ANY_VA_DRIVER");
@@ -611,7 +620,13 @@ int virgl_video_init(int drm_fd,
         }
 
         virgl_warn("accepting non-mesa va driver \"%s\" by explicit override; "
-                   "this path is unproven upstream\n", driver);
+                   "caps will be advertised to the guest but decode is KNOWN "
+                   "TO FAIL on nvidia-vaapi-driver: vaRenderPicture succeeds "
+                   "and vaEndPicture returns 0x17 "
+                   "(VA_STATUS_ERROR_DECODING_ERROR) for every frame. Upstream's "
+                   "mesa-only check is load bearing on this driver, not merely "
+                   "conservative. Use for investigation, not as a capability.\n",
+                   driver);
     }
 
     callbacks = cbs;
