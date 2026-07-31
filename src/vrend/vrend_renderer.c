@@ -30,6 +30,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <errno.h>
+/* strcasecmp, for the VIRGL_FORCE_VIDEO value test. string.h arrives
+ * transitively via the util headers, but strings.h does not.
+ */
+#include <strings.h>
 #include "pipe/p_shader_tokens.h"
 
 #include "pipe/p_defines.h"
@@ -7791,8 +7795,17 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
     * without patching a vendored Rust crate.
     */
    {
-      bool want_video = (flags & VREND_USE_VIDEO) ||
-                        (getenv("VIRGL_FORCE_VIDEO") != NULL);
+      /* Value-sensitive on purpose, where the trace knobs in this file test
+       * presence only. Those are diagnostics; this one gates a capability the
+       * evidence contract requires a negative control for, and a knob that
+       * cannot express "off" is how a control silently stops controlling.
+       */
+      const char *force_video = getenv("VIRGL_FORCE_VIDEO");
+      bool forced = force_video && *force_video &&
+                    strcmp(force_video, "0") != 0 &&
+                    strcasecmp(force_video, "false") != 0 &&
+                    strcasecmp(force_video, "off") != 0;
+      bool want_video = (flags & VREND_USE_VIDEO) || forced;
 
       if (want_video) {
          if (vrend_clicbs->get_drm_fd) {
@@ -7812,6 +7825,8 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
          } else {
             virgl_warn("Video disabled due to missing get_drm_fd\n");
          }
+      } else {
+         virgl_info("Video not enabled (no USE_VIDEO flag, VIRGL_FORCE_VIDEO unset or off)\n");
       }
    }
 #endif
