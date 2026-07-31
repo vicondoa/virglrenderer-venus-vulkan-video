@@ -27,6 +27,7 @@
 
 #include <unistd.h>
 #include <stdatomic.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
@@ -13553,8 +13554,25 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
                   egl, pw, ph, plane_drm_format, args->modifier, 1, &plane_fd,
                   &args->plane_strides[i], &args->plane_offsets[i]);
 
+               if (!gr->aux_plane_egl_image[i]) {
+                  /* The modifier describes the layout of the whole planar
+                   * buffer. Importing one plane of it as a single-plane image
+                   * of a different format can be rejected on that basis, so
+                   * fall back to letting the driver infer the layout, which is
+                   * what a client importing this plane on its own would do.
+                   */
+                  gr->aux_plane_egl_image[i] = virgl_egl_image_from_dmabuf(
+                     egl, pw, ph, plane_drm_format, DRM_FORMAT_MOD_INVALID, 1,
+                     &plane_fd, &args->plane_strides[i],
+                     &args->plane_offsets[i]);
+               }
+
                if (!gr->aux_plane_egl_image[i])
-                  virgl_error("%s: failed plane %u image\n", __func__, i);
+                  virgl_error("%s: failed plane %u image (fmt 0x%x %ux%u "
+                              "stride %u offset %u mod 0x%" PRIx64 ")\n",
+                              __func__, i, plane_drm_format, pw, ph,
+                              args->plane_strides[i], args->plane_offsets[i],
+                              (uint64_t)args->modifier);
             }
          }
 #endif
