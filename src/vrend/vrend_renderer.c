@@ -7772,11 +7772,47 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    }
 
 #ifdef ENABLE_VIDEO
-   if (flags & VREND_USE_VIDEO) {
-        if (vrend_clicbs->get_drm_fd)
-            vrend_video_init(vrend_clicbs->get_drm_fd());
-        else
+   /* VREND_USE_VIDEO comes from VIRGL_RENDERER_USE_VIDEO, which the embedder
+    * passes to virgl_renderer_init(). crosvm never passes it: rutabaga_gfx
+    * generates the constant into its bindings but references it nowhere, and
+    * its VirglRendererFlags has no use_video() builder to set bit 11 with.
+    *
+    * The consequence is silent and total. virgl_video_init() is what assigns
+    * va_dpy, and virgl_video_fill_caps() returns -1 on a NULL va_dpy, so the
+    * virgl2 capset reaches the guest with num_video_caps = 0. The guest's
+    * virtio_gpu VA driver then loads cleanly, initialises, and advertises no
+    * profiles at all - which reads like a missing host capability rather than
+    * an unset flag.
+    *
+    * VIRGL_FORCE_VIDEO lets this build initialise video anyway. It is opt-in
+    * and off by default, so a caller that does not set it keeps the upstream
+    * behaviour exactly. The correct upstream fix belongs in rutabaga_gfx and
+    * crosvm, not here; this is the lab's way of reaching the capability
+    * without patching a vendored Rust crate.
+    */
+   {
+      bool want_video = (flags & VREND_USE_VIDEO) ||
+                        (getenv("VIRGL_FORCE_VIDEO") != NULL);
+
+      if (want_video) {
+         if (vrend_clicbs->get_drm_fd) {
+            int video_fd = vrend_clicbs->get_drm_fd();
+            int video_ret = vrend_video_init(video_fd);
+
+            /* Unconditional, not VREND_DEBUG-gated: VREND_DEBUG_ENABLED is
+             * false whenever NDEBUG is defined, which is every build this is
+             * used in, so a debug-gated line would print nothing. One line at
+             * init is not a per-frame cost.
+             */
+            if (video_ret)
+               virgl_warn("Video init failed (drm_fd %d, ret %d)\n",
+                          video_fd, video_ret);
+            else
+               virgl_info("Video initialised on drm_fd %d\n", video_fd);
+         } else {
             virgl_warn("Video disabled due to missing get_drm_fd\n");
+         }
+      }
    }
 #endif
 
