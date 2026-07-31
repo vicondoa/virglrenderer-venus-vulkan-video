@@ -13531,8 +13531,6 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
              args->plane_count > 1) {
             for (uint32_t i = 1; i < args->plane_count &&
                                  i < ARRAY_SIZE(gr->aux_plane_egl_image); i++) {
-               uint32_t plane_virgl_format;
-               uint32_t plane_drm_format = 0;
                uint32_t pw, ph;
                int plane_fd = vres->fd;
 
@@ -13540,39 +13538,41 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
                   continue;
 
                /* Chroma of a two-plane 4:2:0 frame: half size, two channels. */
-               plane_virgl_format = VIRGL_FORMAT_R8G8_UNORM;
                pw = args->width / 2;
                ph = args->height / 2;
 
-               if (virgl_gbm_convert_format(&plane_virgl_format,
-                                            &plane_drm_format)) {
-                  virgl_error("%s: no drm format for plane %u\n", __func__, i);
-                  break;
-               }
-
-               /* Resolve the plane through the buffer's own layout. The whole
-                * buffer is imported as the planar format it actually is, and
-                * the plane is taken from that, because under a tiled modifier
-                * a plane is not a byte range that can be sliced out directly.
+               /* Import the plane directly from the buffer.
+                *
+                * The two-channel 8-bit plane has two DRM spellings that differ
+                * only in which byte is named first, and a driver may accept
+                * one and refuse the other: this host advertises RG88 and not
+                * GR88, which is why importing the chroma plane as GR88 failed
+                * outright. Firefox carries the same substitution for the same
+                * reason. Try both spellings rather than assuming either.
                 */
-               {
-                  uint32_t whole_virgl_format = args->format;
-                  uint32_t whole_drm_format = 0;
+               static const uint32_t chroma_fourccs[] = {
+                  GBM_FORMAT_RG88, GBM_FORMAT_GR88,
+               };
 
-                  if (!virgl_gbm_convert_format(&whole_virgl_format,
-                                                &whole_drm_format)) {
-                     gr->aux_plane_egl_image[i] =
-                        virgl_egl_aux_plane_image_from_dmabuf(
-                           egl, args->width, args->height, whole_drm_format,
-                           args->modifier, args->plane_count, plane_fd,
-                           args->plane_strides, args->plane_offsets, i);
-                  }
+               for (unsigned f = 0;
+                    f < ARRAY_SIZE(chroma_fourccs) && !gr->aux_plane_egl_image[i];
+                    f++) {
+                  gr->aux_plane_egl_image[i] = virgl_egl_image_from_dmabuf(
+                     egl, pw, ph, chroma_fourccs[f], args->modifier, 1,
+                     &plane_fd, &args->plane_strides[i],
+                     &args->plane_offsets[i]);
+
+                  if (!gr->aux_plane_egl_image[i])
+                     gr->aux_plane_egl_image[i] = virgl_egl_image_from_dmabuf(
+                        egl, pw, ph, chroma_fourccs[f], DRM_FORMAT_MOD_INVALID,
+                        1, &plane_fd, &args->plane_strides[i],
+                        &args->plane_offsets[i]);
                }
 
                if (!gr->aux_plane_egl_image[i])
-                  virgl_error("%s: failed plane %u image (fmt 0x%x %ux%u "
+                  virgl_error("%s: failed plane %u image (%ux%u "
                               "stride %u offset %u mod 0x%" PRIx64 ")\n",
-                              __func__, i, plane_drm_format, pw, ph,
+                              __func__, i, pw, ph,
                               args->plane_strides[i], args->plane_offsets[i],
                               (uint64_t)args->modifier);
             }
