@@ -10701,31 +10701,70 @@ static int vrend_blit_plane_index(const struct vrend_resource *res,
                                   const struct pipe_box *box)
 {
    int found = -1;
+   /* Each guard gets its own counter. Five conditions have to hold together,
+    * so "it returned -1" says nothing useful on its own; which guard rejected
+    * is the entire diagnostic. Env-gated because it is per blit.
+    */
+   static uint64_t n_calls, n_same_fmt, n_no_egl, n_ambiguous, n_no_aux,
+                   n_bad_dims, n_ok;
+   static int trace = -1;
 
-   if (view_format == res->base.format)
-      return -1;
-   if (!has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE))
-      return -1;
+   if (trace < 0)
+      trace = getenv("VIRGL_TRACE_BLIT_PLANE") ? 1 : 0;
+
+   n_calls++;
+
+   if (view_format == res->base.format) {
+      n_same_fmt++;
+      goto out;
+   }
+   if (!has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE)) {
+      n_no_egl++;
+      goto out;
+   }
 
    for (unsigned i = 1; i < ARRAY_SIZE(res->aux_plane_egl_image); i++) {
       if (!res->aux_plane_egl_image[i])
          continue;
-      if (found >= 0)
-         return -1; /* more than one candidate: refuse to guess */
+      if (found >= 0) {
+         n_ambiguous++;
+         found = -1;
+         goto out;
+      }
       found = (int)i;
    }
 
-   if (found < 0)
-      return -1;
+   if (found < 0) {
+      n_no_aux++;
+      goto out;
+   }
 
    /* Two-plane 4:2:0 is the only shape this serves, so the later plane is half
     * the resource in each dimension. Checking it keeps an unrelated
     * format-reinterpreting blit from being captured by this path.
     */
    if ((uint32_t)box->width != res->base.width0 / 2 ||
-       (uint32_t)box->height != res->base.height0 / 2)
-      return -1;
+       (uint32_t)box->height != res->base.height0 / 2) {
+      if (trace) {
+         virgl_info("BLIT-PLANE dim-reject box=%dx%d res=%ux%u view_fmt=%d res_fmt=%d\n",
+                    box->width, box->height, res->base.width0, res->base.height0,
+                    view_format, res->base.format);
+      }
+      n_bad_dims++;
+      found = -1;
+      goto out;
+   }
 
+   n_ok++;
+
+out:
+   if (trace && (n_calls <= 3 || (n_calls & (n_calls - 1)) == 0)) {
+      virgl_info("BLIT-PLANE calls=%" PRIu64 " ok=%" PRIu64
+                 " same_fmt=%" PRIu64 " no_egl=%" PRIu64 " no_aux=%" PRIu64
+                 " ambiguous=%" PRIu64 " bad_dims=%" PRIu64 "\n",
+                 n_calls, n_ok, n_same_fmt, n_no_egl, n_no_aux,
+                 n_ambiguous, n_bad_dims);
+   }
    return found;
 }
 
