@@ -10630,6 +10630,54 @@ cleanup:
    glBindTexture(dst_res->target, 0);
 }
 
+/* Which plane of a multi-planar resource a blit is really reading, or -1.
+ *
+ * A blit command carries only resource handles, so when the planes of one
+ * buffer share a resource there is nothing in the command naming the plane.
+ * The combination that identifies it is still unambiguous: the resource is
+ * single-channel because the first plane typed it, the caller is asking for it
+ * through a wider view, and an auxiliary image exists for a later plane. That
+ * only arises for a buffer whose planes were imported separately.
+ *
+ * Deliberately narrow. It requires exactly one populated auxiliary plane, the
+ * view format to differ from the resource format, and the requested region to
+ * match that plane's dimensions. Anything else returns -1 and the caller
+ * proceeds unchanged, because guessing wrong would silently sample the wrong
+ * part of a frame rather than fail visibly.
+ */
+static int vrend_blit_plane_index(const struct vrend_resource *res,
+                                  enum virgl_formats view_format,
+                                  const struct pipe_box *box)
+{
+   int found = -1;
+
+   if (view_format == res->base.format)
+      return -1;
+   if (!has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE))
+      return -1;
+
+   for (unsigned i = 1; i < ARRAY_SIZE(res->aux_plane_egl_image); i++) {
+      if (!res->aux_plane_egl_image[i])
+         continue;
+      if (found >= 0)
+         return -1; /* more than one candidate: refuse to guess */
+      found = (int)i;
+   }
+
+   if (found < 0)
+      return -1;
+
+   /* Two-plane 4:2:0 is the only shape this serves, so the later plane is half
+    * the resource in each dimension. Checking it keeps an unrelated
+    * format-reinterpreting blit from being captured by this path.
+    */
+   if ((uint32_t)box->width != res->base.width0 / 2 ||
+       (uint32_t)box->height != res->base.height0 / 2)
+      return -1;
+
+   return found;
+}
+
 static inline void
 vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst_res,
                      uint32_t src_level, const struct pipe_box *src_box,
@@ -11241,6 +11289,20 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    struct vrend_resource *src_res, *dst_res;
    int src_width, src_height, dst_width, dst_height;
    bool used_blit_int = false;
+   /* A blit reading a later plane of a shared buffer needs that plane's own
+    * texture. The resource's texture covers the first plane only, and for the
+    * two-plane 4:2:0 case the second plane does not even lie inside it, since
+    * the first is padded before the second begins. Copying from the resource
+    * texture therefore reads the wrong bytes rather than merely the wrong
+    * format.
+    *
+    * Sampling already resolves this through aux_plane_egl_image[]; a blit does
+    * not go through a sampler view, so it is wired up here too. Doing so is
+    * what lets the ordinary GPU-copy path work, rather than requiring the
+    * zero-copy path purely to reach per-plane images.
+    */
+   GLuint plane_tex = 0;
+   struct vrend_resource plane_src;
    src_res = vrend_renderer_ctx_res_lookup(ctx, src_handle);
    dst_res = vrend_renderer_ctx_res_lookup(ctx, dst_handle);
 
@@ -11354,9 +11416,38 @@ void vrend_renderer_blit(struct vrend_context *ctx,
        info->src.box.height == info->dst.box.height &&
        info->src.box.depth == info->dst.box.depth) {
       VREND_DEBUG(dbg_blit, ctx,  "  Use glCopyImageSubData\n");
-      vrend_copy_sub_image(src_res, dst_res, info->src.level, &info->src.box,
-                           info->dst.level, info->dst.box.x, info->dst.box.y,
-                           info->dst.box.z);
+      {
+         int plane = vrend_blit_plane_index(src_res, info->src.format,
+                                            &info->src.box);
+         struct vrend_resource *copy_src = src_res;
+
+         if (plane > 0) {
+            /* Wrap the plane's image in a throwaway texture and copy from
+             * that. Only the fields glCopyImageSubData reads are set, and the
+             * texture is deleted immediately afterwards, so nothing outlives
+             * this call or is visible to the resource.
+             */
+            glGenTextures(1, &plane_tex);
+            glBindTexture(src_res->target, plane_tex);
+            glEGLImageTargetTexture2DOES(
+               src_res->target,
+               (GLeglImageOES) src_res->aux_plane_egl_image[plane]);
+            glBindTexture(src_res->target, 0);
+
+            plane_src = *src_res;
+            plane_src.gl_id = plane_tex;
+            copy_src = &plane_src;
+         }
+
+         vrend_copy_sub_image(copy_src, dst_res, info->src.level,
+                              &info->src.box, info->dst.level, info->dst.box.x,
+                              info->dst.box.y, info->dst.box.z);
+
+         if (plane_tex) {
+            glDeleteTextures(1, &plane_tex);
+            plane_tex = 0;
+         }
+      }
    } else {
       VREND_DEBUG(dbg_blit, ctx, "  Use blit_int\n");
       vrend_renderer_blit_int(ctx, src_res, dst_res, info);
