@@ -11522,6 +11522,25 @@ void vrend_renderer_blit(struct vrend_context *ctx,
             glEGLImageTargetTexture2DOES(
                src_res->target,
                (GLeglImageOES) src_res->aux_plane_egl_image[plane]);
+
+            /* glCopyImageSubData derives formats from the texture objects, not
+             * from anything passed to it, and requires the two to share a texel
+             * size class. The resource's own format says nothing about what the
+             * plane image actually carries, so read it off the texture while it
+             * is still bound rather than inferring it.
+             */
+            if (getenv("VIRGL_TRACE_BLIT_PLANE")) {
+               GLint ifmt = 0, w = 0, h = 0;
+               glGetTexLevelParameteriv(src_res->target, 0,
+                                        GL_TEXTURE_INTERNAL_FORMAT, &ifmt);
+               glGetTexLevelParameteriv(src_res->target, 0,
+                                        GL_TEXTURE_WIDTH, &w);
+               glGetTexLevelParameteriv(src_res->target, 0,
+                                        GL_TEXTURE_HEIGHT, &h);
+               virgl_info("BLIT-PLANE tex plane=%d ifmt=0x%x %dx%d\n",
+                          plane, ifmt, w, h);
+            }
+
             glBindTexture(src_res->target, 0);
 
             plane_src = *src_res;
