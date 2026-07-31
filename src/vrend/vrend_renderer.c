@@ -13550,8 +13550,11 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
                 * outright. Firefox carries the same substitution for the same
                 * reason. Try both spellings rather than assuming either.
                 */
+               /* gbm.h spells only one of the two orderings, so name the other
+                * by its fourcc: 'R','G','8','8'.
+                */
                static const uint32_t chroma_fourccs[] = {
-                  GBM_FORMAT_RG88, GBM_FORMAT_GR88,
+                  0x38384752u /* DRM_FORMAT_RG88 */, GBM_FORMAT_GR88,
                };
 
                for (unsigned f = 0;
