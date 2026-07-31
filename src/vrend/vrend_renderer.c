@@ -2794,6 +2794,27 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
          needs_view = true;
 
       if (needs_view &&
+          view->u.buf.first_element < ARRAY_SIZE(res->aux_plane_egl_image) &&
+          res->aux_plane_egl_image[view->u.buf.first_element]) {
+        /* A view of one plane of a multi-planar resource.
+         *
+         * The guest encodes the plane index in the field this union otherwise
+         * reads as first_layer, so a plane view arrives looking like a request
+         * for layer N of a single-layer texture. The texture-view branch below
+         * validates that as a layer range and rejects it, which happens before
+         * the plane can be resolved -- so this has to be tested first, and it
+         * is safe to do so because an auxiliary image exists at an index only
+         * for a resource whose planes were imported separately.
+         *
+         * Index 0 is never populated, so the first plane still takes the
+         * ordinary path below.
+         */
+        void *image = res->aux_plane_egl_image[view->u.buf.first_element];
+        glGenTextures(1, &view->gl_id);
+        glBindTexture(view->target, view->gl_id);
+        glEGLImageTargetTexture2DOES(view->target, (GLeglImageOES) image);
+        glBindTexture(view->target, 0);
+      } else if (needs_view &&
           has_bit(view->texture->storage_bits, VREND_STORAGE_GL_IMMUTABLE) &&
           has_feature(feat_texture_view)) {
         GLenum internalformat = tex_conv_table[format].internalformat;
@@ -2878,13 +2899,6 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
            glTexParameteri(view->target, GL_TEXTURE_SRGB_DECODE_EXT,
                             view->srgb_decode);
         }
-        glBindTexture(view->target, 0);
-      } else if (needs_view && view->u.buf.first_element < ARRAY_SIZE(res->aux_plane_egl_image) &&
-            res->aux_plane_egl_image[view->u.buf.first_element]) {
-        void *image = res->aux_plane_egl_image[view->u.buf.first_element];
-        glGenTextures(1, &view->gl_id);
-        glBindTexture(view->target, view->gl_id);
-        glEGLImageTargetTexture2DOES(view->target, (GLeglImageOES) image);
         glBindTexture(view->target, 0);
       }
    }
