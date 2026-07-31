@@ -887,6 +887,58 @@ out_close:
    return image;
 }
 
+void *virgl_egl_aux_plane_image_from_dmabuf(struct virgl_egl *egl,
+                                            uint32_t width, uint32_t height,
+                                            uint32_t drm_format,
+                                            uint64_t modifier,
+                                            uint32_t plane_count,
+                                            int fd,
+                                            const uint32_t *plane_strides,
+                                            const uint32_t *plane_offsets,
+                                            int plane)
+{
+   /* Resolve a plane of an imported buffer through GBM rather than by
+    * arithmetic.
+    *
+    * Slicing a plane out of a dmabuf by byte offset only works for a linear
+    * layout. Under a tiled modifier the planes are not simple ranges, and an
+    * EGL import of one plane described that way is rejected. GBM knows the
+    * layout the modifier denotes and hands out a real per-plane handle, which
+    * is what the gbm_bo path above already relies on, so import the buffer as
+    * the planar whole and take the plane from that.
+    */
+   struct gbm_import_fd_modifier_data data;
+   struct gbm_bo *bo;
+   void *image;
+
+   if (!egl->gbm || !egl->gbm->device || plane_count > GBM_MAX_PLANES)
+      return NULL;
+
+   memset(&data, 0, sizeof(data));
+   data.width = width;
+   data.height = height;
+   data.format = drm_format;
+   data.num_fds = plane_count;
+   data.modifier = modifier;
+   for (uint32_t i = 0; i < plane_count; i++) {
+      data.fds[i] = fd;
+      data.strides[i] = plane_strides[i];
+      data.offsets[i] = plane_offsets[i];
+   }
+
+   bo = gbm_bo_import(egl->gbm->device, GBM_BO_IMPORT_FD_MODIFIER, &data,
+                      GBM_BO_USE_RENDERING);
+   if (!bo)
+      return NULL;
+
+   /* The plane image is created from a freshly exported plane fd, so it does
+    * not depend on this bo outliving the call.
+    */
+   image = virgl_egl_aux_plane_image_from_gbm_bo(egl, bo, plane);
+   gbm_bo_destroy(bo);
+   return image;
+}
+
 void *virgl_egl_aux_plane_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo, int plane)
 {
    int ret;

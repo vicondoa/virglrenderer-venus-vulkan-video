@@ -13550,21 +13550,23 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
                   break;
                }
 
-               gr->aux_plane_egl_image[i] = virgl_egl_image_from_dmabuf(
-                  egl, pw, ph, plane_drm_format, args->modifier, 1, &plane_fd,
-                  &args->plane_strides[i], &args->plane_offsets[i]);
+               /* Resolve the plane through the buffer's own layout. The whole
+                * buffer is imported as the planar format it actually is, and
+                * the plane is taken from that, because under a tiled modifier
+                * a plane is not a byte range that can be sliced out directly.
+                */
+               {
+                  uint32_t whole_virgl_format = args->format;
+                  uint32_t whole_drm_format = 0;
 
-               if (!gr->aux_plane_egl_image[i]) {
-                  /* The modifier describes the layout of the whole planar
-                   * buffer. Importing one plane of it as a single-plane image
-                   * of a different format can be rejected on that basis, so
-                   * fall back to letting the driver infer the layout, which is
-                   * what a client importing this plane on its own would do.
-                   */
-                  gr->aux_plane_egl_image[i] = virgl_egl_image_from_dmabuf(
-                     egl, pw, ph, plane_drm_format, DRM_FORMAT_MOD_INVALID, 1,
-                     &plane_fd, &args->plane_strides[i],
-                     &args->plane_offsets[i]);
+                  if (!virgl_gbm_convert_format(&whole_virgl_format,
+                                                &whole_drm_format)) {
+                     gr->aux_plane_egl_image[i] =
+                        virgl_egl_aux_plane_image_from_dmabuf(
+                           egl, args->width, args->height, whole_drm_format,
+                           args->modifier, args->plane_count, plane_fd,
+                           args->plane_strides, args->plane_offsets, i);
+                  }
                }
 
                if (!gr->aux_plane_egl_image[i])

@@ -84,6 +84,15 @@ void virgl_egl_image_destroy(struct virgl_egl *egl, void *image);
 
 void *virgl_egl_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo);
 void *virgl_egl_aux_plane_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo, int plane);
+void *virgl_egl_aux_plane_image_from_dmabuf(struct virgl_egl *egl,
+                                           uint32_t width, uint32_t height,
+                                           uint32_t drm_format,
+                                           uint64_t modifier,
+                                           uint32_t plane_count,
+                                           int fd,
+                                           const uint32_t *plane_strides,
+                                           const uint32_t *plane_offsets,
+                                           int plane);
 #endif
 
 bool virgl_egl_supports_fences(struct virgl_egl *egl);
