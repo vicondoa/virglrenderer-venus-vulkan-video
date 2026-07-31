@@ -116,6 +116,19 @@ static const struct format_conversion conversions[] = {
     { GBM_FORMAT_ABGR8888, VIRGL_FORMAT_R8G8B8A8_UNORM},
     { GBM_FORMAT_XBGR8888, VIRGL_FORMAT_R8G8B8X8_UNORM},
     { GBM_FORMAT_R8, VIRGL_FORMAT_R8_UNORM},
+    /* The chroma plane of an NV12 frame, imported on its own.
+     *
+     * NV12 above covers importing the whole frame as one multi-planar
+     * resource, but clients that import plane by plane ask for the luma plane
+     * as R8 and the chroma plane as GR88, which is two interleaved 8-bit
+     * channels. Without this entry there is no virgl format for that plane at
+     * all, so the only 8-bit single-plane format available is R8 and a
+     * two-channel plane cannot be represented.
+     *
+     * GBM_FORMAT_GR88 is "[15:0] G:R 8:8 little endian", which is byte 0 = R,
+     * byte 1 = G, matching VIRGL_FORMAT_R8G8_UNORM.
+     */
+    { GBM_FORMAT_GR88, VIRGL_FORMAT_R8G8_UNORM},
     { GBM_FORMAT_YVU420, VIRGL_FORMAT_YV12},
 };
 
