@@ -13560,10 +13560,10 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          if (trace_import < 0)
             trace_import = getenv("VIRGL_TRACE_DMABUF_IMPORT") ? 1 : 0;
          if (trace_import) {
-            virgl_error("dmabuf import: handle=%u virgl_fmt=%s -> drm_fourcc=0x%08x "
+            virgl_error("dmabuf import: res_id=%u virgl_fmt=%s -> drm_fourcc=0x%08x "
                         "(%c%c%c%c) %ux%u planes=%u stride0=%u offset0=%u "
                         "modifier=0x%llx\n",
-                        args->handle,
+                        res_id,
                         util_format_name(gr->base.format), drm_format,
                         (char)(drm_format & 0xff), (char)((drm_format >> 8) & 0xff),
                         (char)((drm_format >> 16) & 0xff), (char)((drm_format >> 24) & 0xff),
