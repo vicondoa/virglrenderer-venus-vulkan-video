@@ -13492,8 +13492,60 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
 
    /* either a bad res_id or the resource is already typed */
    if (!res) {
-      if (vrend_renderer_ctx_res_lookup(ctx, res_id))
+      struct vrend_resource *gr = vrend_renderer_ctx_res_lookup(ctx, res_id);
+      if (gr) {
+#if defined(HAVE_EPOXY_EGL_H) && defined(ENABLE_GBM)
+         /* A further plane of a buffer whose first plane already typed it.
+          *
+          * Planes of one multi-planar frame share a buffer object, so a guest
+          * that imports them as separate images describes this resource more
+          * than once. The first description types it and the texture that
+          * results covers that plane only. Silently accepting and discarding
+          * the rest leaves every later plane unrepresented: sampling one reads
+          * the first plane's texture, and for NV12 the chroma bytes are not
+          * even inside it, because luma is padded before chroma begins.
+          *
+          * Build a per-plane image for each additional plane instead. The
+          * existing type and texture are untouched, so the first plane keeps
+          * working, and vrend_create_sampler_view already selects
+          * aux_plane_egl_image[] by plane index. Index 0 stays NULL so the
+          * first plane continues through the ordinary path.
+          */
+         struct virgl_resource *vres = virgl_resource_lookup(res_id);
+         if (egl && vres && vres->fd_type == VIRGL_RESOURCE_FD_DMABUF &&
+             args->plane_count > 1) {
+            for (uint32_t i = 1; i < args->plane_count &&
+                                 i < ARRAY_SIZE(gr->aux_plane_egl_image); i++) {
+               uint32_t plane_virgl_format;
+               uint32_t plane_drm_format = 0;
+               uint32_t pw, ph;
+               int plane_fd = vres->fd;
+
+               if (gr->aux_plane_egl_image[i])
+                  continue;
+
+               /* Chroma of a two-plane 4:2:0 frame: half size, two channels. */
+               plane_virgl_format = VIRGL_FORMAT_R8G8_UNORM;
+               pw = args->width / 2;
+               ph = args->height / 2;
+
+               if (virgl_gbm_convert_format(&plane_virgl_format,
+                                            &plane_drm_format)) {
+                  virgl_error("%s: no drm format for plane %u\n", __func__, i);
+                  break;
+               }
+
+               gr->aux_plane_egl_image[i] = virgl_egl_image_from_dmabuf(
+                  egl, pw, ph, plane_drm_format, args->modifier, 1, &plane_fd,
+                  &args->plane_strides[i], &args->plane_offsets[i]);
+
+               if (!gr->aux_plane_egl_image[i])
+                  virgl_error("%s: failed plane %u image\n", __func__, i);
+            }
+         }
+#endif
          return 0;
+      }
 
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_id);
       return EINVAL;
