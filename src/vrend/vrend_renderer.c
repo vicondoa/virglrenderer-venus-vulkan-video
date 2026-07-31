@@ -11369,14 +11369,28 @@ void vrend_renderer_blit(struct vrend_context *ctx,
     * invisible instead of fatal. Diagnose here; fix the cause elsewhere.
     */
    GLenum blit_err = glGetError();
-   if (blit_err != GL_NO_ERROR) {
+
+   /* Trace every blit when asked, not only the failing ones.
+    *
+    * The failing copy here is one plane of a video frame while a sibling plane
+    * copies fine, and the difference between those two calls is the whole
+    * question. Logging only failures shows one half of a comparison, which is
+    * how several wrong conclusions have already been reached about this path.
+    *
+    * Resource handles are included so a blit operand can be tied back to the
+    * import that created it, and resource dimensions alongside the box because
+    * a 640x360 region can come from a 640x360 texture or from a corner of a
+    * 1280x720 one, and those are different bugs.
+    */
+   static int trace_blit = -1;
+   if (trace_blit < 0)
+      trace_blit = getenv("VIRGL_TRACE_BLIT") ? 1 : 0;
+
+   if (blit_err != GL_NO_ERROR || trace_blit) {
       /* The virgl resource format is what the guest declared. For a texture
        * imported from a dmabuf it can disagree with the format GL actually
        * gave the texture, which is the whole reason
-       * vrend_resource_get_internal_format_override() exists. Report both, so
-       * a mismatch is visible rather than inferred: a chroma plane declared
-       * single-channel while GL holds it as GL_RG8 is a very different bug
-       * from one that is genuinely single-channel.
+       * vrend_resource_get_internal_format_override() exists.
        */
       GLint src_gl_ifmt = 0, dst_gl_ifmt = 0;
       if (src_res->gl_id) {
@@ -11389,18 +11403,20 @@ void vrend_renderer_blit(struct vrend_context *ctx,
          glGetTexLevelParameteriv(dst_res->target, info->dst.level,
                                   GL_TEXTURE_INTERNAL_FORMAT, &dst_gl_ifmt);
       }
-      /* Discard any error these queries raised so the reported blit error is
-       * the blit's own and not this diagnostic's.
+      /* Discard any error these queries raised so the reported status is the
+       * blit's own and not this diagnostic's.
        */
       glGetError();
 
-      virgl_error("BLIT failed with GL error 0x%x via %s: "
-                  "src fmt %s (view %s) gl_ifmt:0x%x override:0x%x samples:%d egl:%d gbm:%d "
-                  "box %d,%d,%d %dx%dx%d level:%d -> "
-                  "dst fmt %s (view %s) gl_ifmt:0x%x override:0x%x samples:%d egl:%d gbm:%d "
-                  "box %d,%d,%d %dx%dx%d level:%d; "
+      virgl_error("BLIT %s (gl 0x%x) via %s: "
+                  "src h:%u res %ux%u fmt %s (view %s) gl_ifmt:0x%x override:0x%x "
+                  "samples:%d egl:%d gbm:%d box %d,%d,%d %dx%dx%d level:%d -> "
+                  "dst h:%u res %ux%u fmt %s (view %s) gl_ifmt:0x%x override:0x%x "
+                  "samples:%d egl:%d gbm:%d box %d,%d,%d %dx%dx%d level:%d; "
                   "mask:0x%x filter:%d scissor:%d alpha_blend:%d\n",
-                  blit_err, used_blit_int ? "blit_int" : "glCopyImageSubData",
+                  blit_err == GL_NO_ERROR ? "ok" : "FAILED", blit_err,
+                  used_blit_int ? "blit_int" : "glCopyImageSubData",
+                  src_handle, src_res->base.width0, src_res->base.height0,
                   util_format_name(src_res->base.format),
                   util_format_name(info->src.format),
                   src_gl_ifmt, vrend_resource_get_internal_format_override(src_res),
@@ -11410,6 +11426,7 @@ void vrend_renderer_blit(struct vrend_context *ctx,
                   info->src.box.x, info->src.box.y, info->src.box.z,
                   info->src.box.width, info->src.box.height, info->src.box.depth,
                   info->src.level,
+                  dst_handle, dst_res->base.width0, dst_res->base.height0,
                   util_format_name(dst_res->base.format),
                   util_format_name(info->dst.format),
                   dst_gl_ifmt, vrend_resource_get_internal_format_override(dst_res),
@@ -13543,9 +13560,10 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          if (trace_import < 0)
             trace_import = getenv("VIRGL_TRACE_DMABUF_IMPORT") ? 1 : 0;
          if (trace_import) {
-            virgl_error("dmabuf import: virgl_fmt=%s -> drm_fourcc=0x%08x "
+            virgl_error("dmabuf import: handle=%u virgl_fmt=%s -> drm_fourcc=0x%08x "
                         "(%c%c%c%c) %ux%u planes=%u stride0=%u offset0=%u "
                         "modifier=0x%llx\n",
+                        args->handle,
                         util_format_name(gr->base.format), drm_format,
                         (char)(drm_format & 0xff), (char)((drm_format >> 8) & 0xff),
                         (char)((drm_format >> 16) & 0xff), (char)((drm_format >> 24) & 0xff),
