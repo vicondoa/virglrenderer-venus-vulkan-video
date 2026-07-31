@@ -13525,6 +13525,17 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
           * working, and vrend_create_sampler_view already selects
           * aux_plane_egl_image[] by plane index. Index 0 stays NULL so the
           * first plane continues through the ordinary path.
+          *
+          * Upstream builds these images only from a gbm_bo, and only for
+          * formats that cannot take a texture view. Neither holds here: crosvm
+          * initialises virglrenderer with surfaceless EGL and no GBM device,
+          * so egl->gbm is NULL, and the resource is typed R8, which can take a
+          * view. Hence importing the plane straight from the dmabuf with the
+          * per-plane stride and offset the guest sent.
+          *
+          * This is the host half of a four-part fix whose guest half lives in
+          * Mesa's virgl winsys and driver. See
+          * labs/venus-vulkan-video/SOLUTION.md in the d2b repository.
           */
          struct virgl_resource *vres = virgl_resource_lookup(res_id);
          if (egl && vres && vres->fd_type == VIRGL_RESOURCE_FD_DMABUF &&
