@@ -66,6 +66,8 @@
  */
 
 
+#include <inttypes.h>
+
 #include "virgl_video.h"
 #include "virgl_video_hw.h"
 
@@ -790,6 +792,33 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
 
     err = virgl_video_decode_bitstream(cdc->codec, tgt->buffer, &desc,
                            num_bs, (const void * const *)bs_buffers, bs_sizes);
+
+    /* Counts the virgl (VA-API) decode path, the way vkr_video counts the
+     * Venus one. Both numbers are needed to attribute a decode: the guest
+     * advertising H.264 through virgl says nothing about whether a decode
+     * command ever crossed, and a host engine reading zero says nothing about
+     * which side dropped it.
+     *
+     * Logged on a curve for the same reason as the Venus counter: observable
+     * on the first call, and not a flood over a long playback. Unconditional
+     * rather than VREND_DEBUG-gated, because VREND_DEBUG_ENABLED is false
+     * whenever NDEBUG is defined and would print nothing here.
+     */
+    {
+        static uint64_t virgl_video_decode_calls;
+        static uint64_t virgl_video_decode_fails;
+
+        virgl_video_decode_calls++;
+        if (err)
+            virgl_video_decode_fails++;
+
+        if (virgl_video_decode_calls <= 3 ||
+            (virgl_video_decode_calls & (virgl_video_decode_calls - 1)) == 0) {
+            virgl_info("VIRGL-VIDEO-EVIDENCE decode_bitstream=%" PRIu64
+                       " failed=%" PRIu64 " last_err=%d\n",
+                       virgl_video_decode_calls, virgl_video_decode_fails, err);
+        }
+    }
 
 err:
     free(bs_buffers);
