@@ -11479,6 +11479,22 @@ void vrend_renderer_blit(struct vrend_context *ctx,
       !(vrend_resource_needs_srgb_decode(src_res, info->src.format) ||
         vrend_resource_needs_srgb_encode(dst_res, info->dst.format));
 
+   /* A blit that must read a later plane of a shared buffer belongs on the same
+    * shader path, for a related reason.
+    *
+    * glCopyImageSubData takes no formats: it derives them from the texture
+    * objects and requires the two to share a texel size class. A texture bound
+    * from an EGLImage reports no internal format at all - measured as
+    * GL_TEXTURE_INTERNAL_FORMAT 0x0 on a correctly sized 640x360 plane image -
+    * so that call cannot classify it and fails with GL_INVALID_OPERATION.
+    *
+    * Sampling has no such requirement, which is exactly why the same per-plane
+    * images already work for the zero-copy path's sampler views. Routing the
+    * plane blit through the shader path uses them the way they can be used.
+    */
+   int blit_plane = vrend_blit_plane_index(src_res, info->src.format,
+                                           &info->src.box);
+
    src_width  = u_minify(src_res->base.width0,  info->src.level);
    src_height = u_minify(src_res->base.height0, info->src.level);
    dst_width  = u_minify(dst_res->base.width0,  info->dst.level);
@@ -11495,6 +11511,7 @@ void vrend_renderer_blit(struct vrend_context *ctx,
        (!info->render_condition_enable || !ctx->sub->cond_render_gl_mode) &&
        format_is_copy_compatible(info->src.format,info->dst.format, comp_flags) &&
        eglimage_copy_compatible &&
+       blit_plane <= 0 &&
        !info->scissor_enable && (info->filter == PIPE_TEX_FILTER_NEAREST) &&
        !info->alpha_blend && (info->mask == PIPE_MASK_RGBA) &&
        src_res->base.nr_samples == dst_res->base.nr_samples &&
@@ -11506,61 +11523,50 @@ void vrend_renderer_blit(struct vrend_context *ctx,
        info->src.box.height == info->dst.box.height &&
        info->src.box.depth == info->dst.box.depth) {
       VREND_DEBUG(dbg_blit, ctx,  "  Use glCopyImageSubData\n");
-      {
-         int plane = vrend_blit_plane_index(src_res, info->src.format,
-                                            &info->src.box);
-         struct vrend_resource *copy_src = src_res;
-
-         if (plane > 0) {
-            /* Wrap the plane's image in a throwaway texture and copy from
-             * that. Only the fields glCopyImageSubData reads are set, and the
-             * texture is deleted immediately afterwards, so nothing outlives
-             * this call or is visible to the resource.
-             */
-            glGenTextures(1, &plane_tex);
-            glBindTexture(src_res->target, plane_tex);
-            glEGLImageTargetTexture2DOES(
-               src_res->target,
-               (GLeglImageOES) src_res->aux_plane_egl_image[plane]);
-
-            /* glCopyImageSubData derives formats from the texture objects, not
-             * from anything passed to it, and requires the two to share a texel
-             * size class. The resource's own format says nothing about what the
-             * plane image actually carries, so read it off the texture while it
-             * is still bound rather than inferring it.
-             */
-            if (getenv("VIRGL_TRACE_BLIT_PLANE")) {
-               GLint ifmt = 0, w = 0, h = 0;
-               glGetTexLevelParameteriv(src_res->target, 0,
-                                        GL_TEXTURE_INTERNAL_FORMAT, &ifmt);
-               glGetTexLevelParameteriv(src_res->target, 0,
-                                        GL_TEXTURE_WIDTH, &w);
-               glGetTexLevelParameteriv(src_res->target, 0,
-                                        GL_TEXTURE_HEIGHT, &h);
-               virgl_info("BLIT-PLANE tex plane=%d ifmt=0x%x %dx%d\n",
-                          plane, ifmt, w, h);
-            }
-
-            glBindTexture(src_res->target, 0);
-
-            plane_src = *src_res;
-            plane_src.gl_id = plane_tex;
-            copy_src = &plane_src;
-         }
-
-         vrend_copy_sub_image(copy_src, dst_res, info->src.level,
-                              &info->src.box, info->dst.level, info->dst.box.x,
-                              info->dst.box.y, info->dst.box.z);
-
-         if (plane_tex) {
-            glDeleteTextures(1, &plane_tex);
-            plane_tex = 0;
-         }
-      }
+      vrend_copy_sub_image(src_res, dst_res, info->src.level,
+                           &info->src.box, info->dst.level, info->dst.box.x,
+                           info->dst.box.y, info->dst.box.z);
    } else {
+      struct vrend_resource *blit_src = src_res;
+
       VREND_DEBUG(dbg_blit, ctx, "  Use blit_int\n");
-      vrend_renderer_blit_int(ctx, src_res, dst_res, info);
+
+      /* A blit reading a later plane of a shared buffer needs that plane's own
+       * texture. The resource's texture covers the first plane only, and for
+       * two-plane 4:2:0 the second does not even lie inside it, since the first
+       * is padded before the second begins.
+       *
+       * Sampling already resolves this in vrend_create_sampler_view(); a blit
+       * does not go through a sampler view, so the same image is wrapped in a
+       * throwaway texture here. Only the fields the blitter reads are set, and
+       * the texture is deleted immediately after, so nothing outlives this call
+       * or becomes visible to the resource.
+       */
+      if (blit_plane > 0) {
+         glGenTextures(1, &plane_tex);
+         glBindTexture(src_res->target, plane_tex);
+         glEGLImageTargetTexture2DOES(
+            src_res->target,
+            (GLeglImageOES) src_res->aux_plane_egl_image[blit_plane]);
+         glBindTexture(src_res->target, 0);
+
+         plane_src = *src_res;
+         plane_src.gl_id = plane_tex;
+         /* The plane is its own size, not the luma-typed resource's. The
+          * blitter derives its source rectangle from these.
+          */
+         plane_src.base.width0 = u_minify(src_res->base.width0, 0) / 2;
+         plane_src.base.height0 = u_minify(src_res->base.height0, 0) / 2;
+         blit_src = &plane_src;
+      }
+
+      vrend_renderer_blit_int(ctx, blit_src, dst_res, info);
       used_blit_int = true;
+
+      if (plane_tex) {
+         glDeleteTextures(1, &plane_tex);
+         plane_tex = 0;
+      }
    }
 
    /* Report a failing blit with enough detail to act on.
