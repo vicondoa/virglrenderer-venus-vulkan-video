@@ -11370,15 +11370,40 @@ void vrend_renderer_blit(struct vrend_context *ctx,
     */
    GLenum blit_err = glGetError();
    if (blit_err != GL_NO_ERROR) {
+      /* The virgl resource format is what the guest declared. For a texture
+       * imported from a dmabuf it can disagree with the format GL actually
+       * gave the texture, which is the whole reason
+       * vrend_resource_get_internal_format_override() exists. Report both, so
+       * a mismatch is visible rather than inferred: a chroma plane declared
+       * single-channel while GL holds it as GL_RG8 is a very different bug
+       * from one that is genuinely single-channel.
+       */
+      GLint src_gl_ifmt = 0, dst_gl_ifmt = 0;
+      if (src_res->gl_id) {
+         glBindTexture(src_res->target, src_res->gl_id);
+         glGetTexLevelParameteriv(src_res->target, info->src.level,
+                                  GL_TEXTURE_INTERNAL_FORMAT, &src_gl_ifmt);
+      }
+      if (dst_res->gl_id) {
+         glBindTexture(dst_res->target, dst_res->gl_id);
+         glGetTexLevelParameteriv(dst_res->target, info->dst.level,
+                                  GL_TEXTURE_INTERNAL_FORMAT, &dst_gl_ifmt);
+      }
+      /* Discard any error these queries raised so the reported blit error is
+       * the blit's own and not this diagnostic's.
+       */
+      glGetError();
+
       virgl_error("BLIT failed with GL error 0x%x via %s: "
-                  "src fmt %s (view %s) samples:%d egl:%d gbm:%d "
+                  "src fmt %s (view %s) gl_ifmt:0x%x override:0x%x samples:%d egl:%d gbm:%d "
                   "box %d,%d,%d %dx%dx%d level:%d -> "
-                  "dst fmt %s (view %s) samples:%d egl:%d gbm:%d "
+                  "dst fmt %s (view %s) gl_ifmt:0x%x override:0x%x samples:%d egl:%d gbm:%d "
                   "box %d,%d,%d %dx%dx%d level:%d; "
                   "mask:0x%x filter:%d scissor:%d alpha_blend:%d\n",
                   blit_err, used_blit_int ? "blit_int" : "glCopyImageSubData",
                   util_format_name(src_res->base.format),
                   util_format_name(info->src.format),
+                  src_gl_ifmt, vrend_resource_get_internal_format_override(src_res),
                   src_res->base.nr_samples,
                   has_bit(src_res->storage_bits, VREND_STORAGE_EGL_IMAGE),
                   has_bit(src_res->storage_bits, VREND_STORAGE_GBM_BUFFER),
@@ -11387,6 +11412,7 @@ void vrend_renderer_blit(struct vrend_context *ctx,
                   info->src.level,
                   util_format_name(dst_res->base.format),
                   util_format_name(info->dst.format),
+                  dst_gl_ifmt, vrend_resource_get_internal_format_override(dst_res),
                   dst_res->base.nr_samples,
                   has_bit(dst_res->storage_bits, VREND_STORAGE_EGL_IMAGE),
                   has_bit(dst_res->storage_bits, VREND_STORAGE_GBM_BUFFER),
