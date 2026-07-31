@@ -11225,6 +11225,7 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    unsigned int comp_flags = 0;
    struct vrend_resource *src_res, *dst_res;
    int src_width, src_height, dst_width, dst_height;
+   bool used_blit_int = false;
    src_res = vrend_renderer_ctx_res_lookup(ctx, src_handle);
    dst_res = vrend_renderer_ctx_res_lookup(ctx, dst_handle);
 
@@ -11344,6 +11345,56 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    } else {
       VREND_DEBUG(dbg_blit, ctx, "  Use blit_int\n");
       vrend_renderer_blit_int(ctx, src_res, dst_res, info);
+      used_blit_int = true;
+   }
+
+   /* Report a failing blit with enough detail to act on.
+    *
+    * Everything the caller sees otherwise is "failed to dispatch BLIT: 22",
+    * and that 22 is manufactured: vrend_decode_blit returns 0, then the
+    * dispatcher turns any pending GL error into EINVAL and poisons the
+    * context, after which every later submission on it is refused. One failed
+    * blit has been observed to produce 11270 downstream refusals, so the
+    * single line that explains it is worth an unconditional glGetError here.
+    *
+    * The equivalent detail already exists a few lines above under
+    * VREND_DEBUG(dbg_blit), but that is compiled out whenever NDEBUG is
+    * defined, which is every build this lab actually runs. A debug knob that
+    * silently does nothing in the configuration under test is worse than no
+    * knob, so this path does not depend on one.
+    *
+    * The error is deliberately NOT consumed. Swallowing it would stop the
+    * context being poisoned and would look like a fix, but the blit still did
+    * not happen, so the frame would be wrong and the failure would be
+    * invisible instead of fatal. Diagnose here; fix the cause elsewhere.
+    */
+   GLenum blit_err = glGetError();
+   if (blit_err != GL_NO_ERROR) {
+      virgl_error("BLIT failed with GL error 0x%x via %s: "
+                  "src fmt %s (view %s) samples:%d egl:%d gbm:%d "
+                  "box %d,%d,%d %dx%dx%d level:%d -> "
+                  "dst fmt %s (view %s) samples:%d egl:%d gbm:%d "
+                  "box %d,%d,%d %dx%dx%d level:%d; "
+                  "mask:0x%x filter:%d scissor:%d alpha_blend:%d\n",
+                  blit_err, used_blit_int ? "blit_int" : "glCopyImageSubData",
+                  util_format_name(src_res->base.format),
+                  util_format_name(info->src.format),
+                  src_res->base.nr_samples,
+                  has_bit(src_res->storage_bits, VREND_STORAGE_EGL_IMAGE),
+                  has_bit(src_res->storage_bits, VREND_STORAGE_GBM_BUFFER),
+                  info->src.box.x, info->src.box.y, info->src.box.z,
+                  info->src.box.width, info->src.box.height, info->src.box.depth,
+                  info->src.level,
+                  util_format_name(dst_res->base.format),
+                  util_format_name(info->dst.format),
+                  dst_res->base.nr_samples,
+                  has_bit(dst_res->storage_bits, VREND_STORAGE_EGL_IMAGE),
+                  has_bit(dst_res->storage_bits, VREND_STORAGE_GBM_BUFFER),
+                  info->dst.box.x, info->dst.box.y, info->dst.box.z,
+                  info->dst.box.width, info->dst.box.height, info->dst.box.depth,
+                  info->dst.level,
+                  info->mask, info->filter, info->scissor_enable,
+                  info->alpha_blend);
    }
 
    if (info->render_condition_enable == false)
