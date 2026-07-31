@@ -13524,6 +13524,37 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
             return EINVAL;
          }
 
+         /* Opt-in import trace.
+          *
+          * The DRM fourcc handed to EGL is derived from the format the guest
+          * declared for the resource, so a plane that arrives here already
+          * mis-described is imported faithfully wrong and every later symptom
+          * is downstream of this line. Distinguishing "the guest declared a
+          * single-channel plane of full chroma width" from "the guest declared
+          * a single-channel plane of half the data" needs the geometry, not
+          * just the format, and only one of those is repairable here.
+          *
+          * Gated on an environment variable because imports occur per frame
+          * and this would otherwise be permanent noise. VREND_DEBUG is not
+          * usable for it: that machinery compiles out whenever NDEBUG is set,
+          * which is every build this is run in.
+          */
+         static int trace_import = -1;
+         if (trace_import < 0)
+            trace_import = getenv("VIRGL_TRACE_DMABUF_IMPORT") ? 1 : 0;
+         if (trace_import) {
+            virgl_error("dmabuf import: virgl_fmt=%s -> drm_fourcc=0x%08x "
+                        "(%c%c%c%c) %ux%u planes=%u stride0=%u offset0=%u "
+                        "modifier=0x%llx\n",
+                        util_format_name(gr->base.format), drm_format,
+                        (char)(drm_format & 0xff), (char)((drm_format >> 8) & 0xff),
+                        (char)((drm_format >> 16) & 0xff), (char)((drm_format >> 24) & 0xff),
+                        args->width, args->height, args->plane_count,
+                        args->plane_count > 0 ? args->plane_strides[0] : 0,
+                        args->plane_count > 0 ? args->plane_offsets[0] : 0,
+                        (unsigned long long)args->modifier);
+         }
+
          gr->egl_image = virgl_egl_image_from_dmabuf(egl,
                                                      args->width,
                                                      args->height,
