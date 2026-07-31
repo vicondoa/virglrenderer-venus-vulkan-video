@@ -573,10 +573,45 @@ int virgl_video_init(int drm_fd,
     driver = vaQueryVendorString(va_dpy);
     virgl_info("Driver version: %s\n", driver ? driver : "<unknown>");
 
-    if (!driver || !strstr(driver, "Mesa Gallium")) {
-        virgl_error("only supports mesa va drivers now\n");
+    if (!driver) {
+        virgl_error("va driver reports no vendor string\n");
         virgl_video_destroy();
         return -1;
+    }
+
+    if (!strstr(driver, "Mesa Gallium")) {
+        /* Upstream refuses every non-Mesa VA driver here, and the "now" in its
+         * message reads as provisional rather than principled. On this host it
+         * is the only thing between the guest and a working decoder: libva
+         * initialises, the NVDEC driver loads, and it is turned away on its
+         * vendor string alone.
+         *
+         * The one host API this file needs from a VA driver is
+         * vaExportSurfaceHandle() with VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2,
+         * which is standard rather than Mesa-specific, and which
+         * nvidia-vaapi-driver implements - it is how that driver hands frames
+         * to EGL consumers already. So the restriction looks conservative on
+         * this path rather than load bearing.
+         *
+         * "Looks" is not "is", so this is a separate opt-in from
+         * VIRGL_FORCE_VIDEO rather than folded into it. Enabling video and
+         * accepting a non-Mesa driver are two different decisions, and keeping
+         * them separable is what makes a later failure attributable to one of
+         * them. Default behaviour is unchanged: without the variable this
+         * still refuses exactly as upstream does.
+         */
+        const char *allow_any = getenv("VIRGL_VIDEO_ALLOW_ANY_VA_DRIVER");
+
+        if (!allow_any || !*allow_any || !strcmp(allow_any, "0")) {
+            virgl_error("only supports mesa va drivers now (got \"%s\"); "
+                        "set VIRGL_VIDEO_ALLOW_ANY_VA_DRIVER=1 to override\n",
+                        driver);
+            virgl_video_destroy();
+            return -1;
+        }
+
+        virgl_warn("accepting non-mesa va driver \"%s\" by explicit override; "
+                   "this path is unproven upstream\n", driver);
     }
 
     callbacks = cbs;
